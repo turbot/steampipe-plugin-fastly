@@ -4,83 +4,77 @@ API tokens are unique authentication identifiers that you can create for the use
 
 ## Examples
 
-### List all tokens
+### Basic info
 
 ```sql
 select
-  *
-from
-  fastly_token
-```
-
-### Tokens expiring in the next 30 days
-
-```sql
-select
+  id,
   name,
   created_at,
-  expires_at
-from
-  fastly_token
-where
-  expires_at < current_timestamp + interval '30 days'
-```
-
-### Tokens with no expiration
-
-```sql
-select
-  name,
-  created_at,
-  expires_at
-from
-  fastly_token
-where
-  expires_at is null
-```
-
-### Oldest tokens
-
-```sql
-select
-  name,
-  created_at,
-  date_part('day', now() - created_at) as age_in_days
-from
-  fastly_token
-order by
-  created_at
-```
-
-### Tokens not used recently
-
-```sql
-select
-  name,
+  expires_at,
+  ip,
   last_used_at,
-  date_part('day', now() - last_used_at) as last_used_age_in_days
+  user_id
 from
-  fastly_token
-order by
-  last_used_at
+  fastly_token;
 ```
 
-### Tokens that have never been used
+### Show Tokens expiring in the next 30 days
 
 ```sql
 select
+  id,
   name,
-  last_used_at
+  created_at,
+  expires_at,
+  ip,
+  last_used_at,
+  user_id
 from
   fastly_token
 where
-  last_used_at is null
+  expires_at < current_timestamp + interval '30 days';
 ```
 
-### Tokens with access to a given service
+### List Tokens with no expiration
 
 ```sql
 select
+  id,
+  name,
+  created_at,
+  expires_at,
+  ip,
+  last_used_at,
+  user_id
+from
+  fastly_token
+where
+  expires_at is null;
+```
+
+### List Tokens that have never been used
+
+```sql
+select
+  id,
+  name,
+  created_at,
+  expires_at,
+  ip,
+  last_used_at,
+  user_id
+from
+  fastly_token
+where
+  last_used_at is null;
+```
+
+### List Tokens with access to a given service
+
+```sql
+select
+  id,
   name,
   scopes,
   services
@@ -88,31 +82,36 @@ from
   fastly_token
 where
   jsonb_array_length(services) = 0
-  or services ? '1crAFFWV5PmZEzbiZ9FsJT'
+  or services ? '1crAFFWV5PmZEzbiZ9FsJT';
 ```
 
-### Tokens used from an IP outside expected range
+### List Tokens used from an IP outside the expected range
 
 ```sql
 select
+  id,
   name,
   last_used_at,
-  ip
+  ip,
+  user_id
 from
   fastly_token
 where
-  not (ip << '123.0.0.0/8')
+  not (ip << '123.0.0.0/8');
 ```
 
-### Tokens with full access
+### List Tokens with full access
 
 ```sql
 select
   name,
-  scopes,
-  services
+  created_at,
+  expires_at,
+  ip,
+  last_used_at,
+  user_id
 from
   fastly_token
 where
-  scopes ? 'global'
+  scopes ? 'global';
 ```

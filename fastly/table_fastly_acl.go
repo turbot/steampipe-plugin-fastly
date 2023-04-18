@@ -3,10 +3,10 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 func tableFastlyACL(ctx context.Context) *plugin.Table {
@@ -43,7 +43,7 @@ func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 	}
 	input := fastly.ListACLsInput{
 		ServiceID:      serviceID,
-		ServiceVersion: int(d.KeyColumnQuals["service_version"].GetInt64Value()),
+		ServiceVersion: int(d.EqualsQuals["service_version"].GetInt64Value()),
 	}
 	items, err := conn.ListACLs(&input)
 	if err != nil {
@@ -62,8 +62,8 @@ func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (in
 		plugin.Logger(ctx).Error("fastly_service_acl.getACL", "connection_error", err)
 		return nil, err
 	}
-	serviceVersion := int(d.KeyColumnQuals["service_version"].GetInt64Value())
-	name := d.KeyColumnQuals["name"].GetStringValue()
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQuals["name"].GetStringValue()
 	input := fastly.GetACLInput{ServiceID: serviceID, ServiceVersion: serviceVersion, Name: name}
 	result, err := conn.GetACL(&input)
 	if err != nil {

@@ -4,36 +4,48 @@ A Service represents the configuration for a website, app, API, or anything else
 
 ## Examples
 
-### List all services the user has access to
+### Basic info
 
 ```sql
 select
-  *
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
 from
-  fastly_service
+  fastly_service;
 ```
 
 ### List services that are not deleted
 
 ```sql
 select
-  *
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
 from
   fastly_service
 where
-  deleted is null
+  deleted_at is null;
 ```
 
-### Group services by type
+### List wasm type services
 
 ```sql
 select
-  service_type,
-  count(*)
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
 from
   fastly_service
-group by
-  service_type
-order by
-  count desc
+where
+  type = 'wasm';
 ```

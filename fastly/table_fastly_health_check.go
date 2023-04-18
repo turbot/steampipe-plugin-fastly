@@ -3,10 +3,10 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
@@ -55,8 +55,8 @@ func listHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrate
 	input := fastly.ListHealthChecksInput{
 		ServiceID: serviceID,
 	}
-	if d.KeyColumnQuals["service_version"] != nil {
-		input.ServiceVersion = int(d.KeyColumnQuals["service_version"].GetInt64Value())
+	if d.EqualsQuals["service_version"] != nil {
+		input.ServiceVersion = int(d.EqualsQuals["service_version"].GetInt64Value())
 	}
 
 	items, err := conn.ListHealthChecks(&input)
@@ -76,8 +76,8 @@ func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 		plugin.Logger(ctx).Error("fastly_service_health_check.getHealthCheck", "connection_error", err)
 		return nil, err
 	}
-	serviceVersion := int(d.KeyColumnQuals["service_version"].GetInt64Value())
-	name := d.KeyColumnQuals["name"].GetStringValue()
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQuals["name"].GetStringValue()
 	input := fastly.GetHealthCheckInput{ServiceID: serviceID, ServiceVersion: serviceVersion, Name: name}
 	result, err := conn.GetHealthCheck(&input)
 	if err != nil {

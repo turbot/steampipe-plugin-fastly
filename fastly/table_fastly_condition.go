@@ -3,11 +3,11 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
-	"github.com/turbot/steampipe-plugin-sdk/plugin/transform"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
 func tableFastlyCondition(ctx context.Context) *plugin.Table {
@@ -41,7 +41,7 @@ func listCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDa
 		plugin.Logger(ctx).Error("fastly_service_version.listCondition", "connection_error", err)
 		return nil, err
 	}
-	items, err := conn.ListConditions(&fastly.ListConditionsInput{ServiceID: serviceID, ServiceVersion: int(d.KeyColumnQuals["service_version"].GetInt64Value())})
+	items, err := conn.ListConditions(&fastly.ListConditionsInput{ServiceID: serviceID, ServiceVersion: int(d.EqualsQuals["service_version"].GetInt64Value())})
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.listCondition", "query_error", err)
 		return nil, err

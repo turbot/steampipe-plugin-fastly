@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 	"github.com/pkg/errors"
 
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 type serviceClient struct {
@@ -31,21 +31,19 @@ func connect(ctx context.Context, d *plugin.QueryData) (*fastly.Client, string, 
 
 	// Prefer config settings
 	fastlyConfig := GetConfig(d.Connection)
-	if &fastlyConfig != nil {
-		if fastlyConfig.APIKey != nil {
-			apiKey = *fastlyConfig.APIKey
-		}
-		if fastlyConfig.ServiceID != nil {
-			serviceID = *fastlyConfig.ServiceID
-		}
+	if fastlyConfig.APIKey != nil {
+		apiKey = *fastlyConfig.APIKey
+	}
+	if fastlyConfig.ServiceID != nil {
+		serviceID = *fastlyConfig.ServiceID
 	}
 
 	// Error if the minimum config is not set
 	if apiKey == "" {
-		return nil, serviceID, errors.New("api_key must be configured")
+		return nil, serviceID, errors.New("'api_key' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
 	}
 	if serviceID == "" {
-		return nil, serviceID, errors.New("service_id must be configured")
+		return nil, serviceID, errors.New("'service_id' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
 	}
 
 	conn, err := fastly.NewClient(apiKey)

@@ -3,11 +3,11 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
-	"github.com/turbot/steampipe-plugin-sdk/plugin/transform"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
 func tableFastlyBackend(ctx context.Context) *plugin.Table {
@@ -86,8 +86,8 @@ func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData)
 		plugin.Logger(ctx).Error("fastly_service_backend.getBackend", "connection_error", err)
 		return nil, err
 	}
-	serviceVersion := int(d.KeyColumnQuals["service_version"].GetInt64Value())
-	name := d.KeyColumnQuals["name"].GetStringValue()
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQuals["name"].GetStringValue()
 	input := fastly.GetBackendInput{ServiceID: serviceID, ServiceVersion: serviceVersion, Name: name}
 	result, err := conn.GetBackend(&input)
 	if err != nil {

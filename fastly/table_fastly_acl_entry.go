@@ -3,15 +3,15 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
-		Name:        "fastly_acl",
+		Name:        "fastly_acl_entry",
 		Description: "ACL entries for the service version.",
 		List: &plugin.ListConfig{
 			Hydrate:    listACLEntry,
@@ -45,7 +45,7 @@ func listACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 	}
 	input := fastly.ListACLEntriesInput{
 		ServiceID: serviceID,
-		ACLID:     d.KeyColumnQuals["acl_id"].GetStringValue(),
+		ACLID:     d.EqualsQuals["acl_id"].GetStringValue(),
 	}
 	items, err := conn.ListACLEntries(&input)
 	if err != nil {
@@ -64,8 +64,8 @@ func getACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData
 		plugin.Logger(ctx).Error("fastly_service_acl.getACLEntry", "connection_error", err)
 		return nil, err
 	}
-	aclID := d.KeyColumnQuals["acl_id"].GetStringValue()
-	id := d.KeyColumnQuals["id"].GetStringValue()
+	aclID := d.EqualsQuals["acl_id"].GetStringValue()
+	id := d.EqualsQuals["id"].GetStringValue()
 	input := fastly.GetACLEntryInput{ServiceID: serviceID, ACLID: aclID, ID: id}
 	result, err := conn.GetACLEntry(&input)
 	if err != nil {

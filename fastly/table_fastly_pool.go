@@ -3,15 +3,15 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 func tableFastlyPool(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
-		Name:        "fastly_service_pool",
+		Name:        "fastly_pool",
 		Description: "Pools in the Fastly account.",
 		List: &plugin.ListConfig{
 			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
@@ -55,14 +55,14 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 func listPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	conn, _, err := connect(ctx, d)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_pool.listPool", "connection_error", err)
+		plugin.Logger(ctx).Error("fastly_pool.listPool", "connection_error", err)
 		return nil, err
 	}
 	version := h.Item.(*fastly.Version)
-	plugin.Logger(ctx).Warn("fastly_service_pool.listPool", "version", version)
+	plugin.Logger(ctx).Warn("fastly_pool.listPool", "version", version)
 	items, err := conn.ListPools(&fastly.ListPoolsInput{ServiceID: version.ServiceID, ServiceVersion: int(version.Number)})
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_pool.listPool", "query_error", err)
+		plugin.Logger(ctx).Error("fastly_pool.listPool", "query_error", err)
 		return nil, err
 	}
 	for _, i := range items {
@@ -78,12 +78,12 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 		return nil, err
 	}
 
-	if d.KeyColumnQuals["service_id"] != nil {
+	if d.EqualsQuals["service_id"] != nil {
 
-		serviceID = d.KeyColumnQuals["service_id"].GetStringValue()
+		serviceID = d.EqualsQuals["service_id"].GetStringValue()
 
-		if d.KeyColumnQuals["service_version"] != nil {
-			serviceVersion := int(d.KeyColumnQuals["service_version"].GetInt64Value())
+		if d.EqualsQuals["service_version"] != nil {
+			serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 			input := fastly.GetVersionInput{ServiceID: serviceID, ServiceVersion: serviceVersion}
 			version, err := conn.GetVersion(&input)
 			if err != nil {
@@ -113,8 +113,8 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 		}
 		for _, i := range services {
 			serviceVersion := int(i.ActiveVersion)
-			if d.KeyColumnQuals["service_version"] != nil {
-				serviceVersion = int(d.KeyColumnQuals["service_version"].GetInt64Value())
+			if d.EqualsQuals["service_version"] != nil {
+				serviceVersion = int(d.EqualsQuals["service_version"].GetInt64Value())
 			}
 			input := fastly.GetVersionInput{ServiceID: i.ID, ServiceVersion: serviceVersion}
 			plugin.Logger(ctx).Warn("hydrateServiceVersion", "i.ID", i.ID)

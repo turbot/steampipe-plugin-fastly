@@ -3,10 +3,10 @@ package fastly
 import (
 	"context"
 
-	"github.com/fastly/go-fastly/v3/fastly"
+	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 func tableFastlyDictionary(ctx context.Context) *plugin.Table {
@@ -51,7 +51,7 @@ func listDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 	}
 	input := fastly.ListDictionariesInput{
 		ServiceID:      serviceID,
-		ServiceVersion: int(d.KeyColumnQuals["service_version"].GetInt64Value()),
+		ServiceVersion: int(d.EqualsQuals["service_version"].GetInt64Value()),
 	}
 	items, err := conn.ListDictionaries(&input)
 	if err != nil {
@@ -70,8 +70,8 @@ func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDa
 		plugin.Logger(ctx).Error("fastly_dictionary.getDictionary", "connection_error", err)
 		return nil, err
 	}
-	serviceVersion := int(d.KeyColumnQuals["service_version"].GetInt64Value())
-	name := d.KeyColumnQuals["name"].GetStringValue()
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQuals["name"].GetStringValue()
 	input := fastly.GetDictionaryInput{ServiceID: serviceID, ServiceVersion: serviceVersion, Name: name}
 	result, err := conn.GetDictionary(&input)
 	if err != nil {

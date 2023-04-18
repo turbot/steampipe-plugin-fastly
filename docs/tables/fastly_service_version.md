@@ -4,22 +4,60 @@ A Version represents a specific instance of the configuration for a service. A V
 
 ## Examples
 
-### List all versions of all services
+### Basic info
 
 ```sql
 select
-  *
+  service_id,
+  number,
+  active,
+  created_at,
+  locked
 from
-  fastly_service_version
+  fastly_service_version;
 ```
 
-### List all active versions
+### List all inactive versions
 
 ```sql
 select
-  *
+  service_id,
+  number,
+  active,
+  created_at,
+  locked
 from
   fastly_service_version
 where
-  active
+  not active;
+```
+
+### List all locked versions
+
+```sql
+select
+  service_id,
+  number,
+  active,
+  created_at,
+  locked
+from
+  fastly_service_version
+where
+  locked;
+```
+
+### List versions that are not deleted
+
+```sql
+select
+  service_id,
+  number,
+  active,
+  created_at,
+  locked
+from
+  fastly_service_version
+where
+  deleted_at is null;
 ```
