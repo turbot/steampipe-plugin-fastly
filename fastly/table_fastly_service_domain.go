@@ -15,7 +15,12 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 		Name:        "fastly_service_domain",
 		Description: "Domains for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listServiceDomains,
+			ParentHydrate: listServiceVersions,
+			Hydrate:       listServiceDomains,
+		},
+		Get: &plugin.GetConfig{
+			Hydrate:    getServiceDomain,
+			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -49,11 +54,6 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 				Description: "Timestamp (UTC) of when the domain was deleted.",
 			},
 			{
-				Name:        "locked",
-				Type:        proto.ColumnType_BOOL,
-				Description: "Whether the service version is locked or not. Objects can not be added or edited on locked versions.",
-			},
-			{
 				Name:        "updated_at",
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Timestamp (UTC) of when the domain was updated.",
@@ -71,13 +71,17 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 }
 
 func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_domain.listServiceDomains", "connection_error", err)
 		return nil, err
 	}
-
-	items, err := conn.ListServiceDomains(&fastly.ListServiceDomainInput{ServiceID: serviceID})
+	version := h.Item.(*fastly.Version)
+	input := &fastly.ListDomainsInput{
+		ServiceID:      version.ServiceID,
+		ServiceVersion: version.Number,
+	}
+	items, err := serviceClient.Client.ListDomains(input)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_domain.listServiceDomains", "api_error", err)
 		return nil, err
@@ -92,4 +96,27 @@ func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.Hydr
 	}
 
 	return nil, nil
+}
+
+func getServiceDomain(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	name := d.EqualsQualString("name")
+	service_version := int(d.EqualsQuals["service_version"].GetInt64Value())
+	serviceClient, err := connect(ctx, d)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_service_domain.getServiceDomain", "connection_error", err)
+		return nil, err
+	}
+
+	input := &fastly.GetDomainInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: service_version,
+		Name:           name,
+	}
+	item, err := serviceClient.Client.GetDomain(input)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_service_domain.getServiceDomain", "api_error", err)
+		return nil, err
+	}
+
+	return item, nil
 }

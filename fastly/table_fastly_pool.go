@@ -14,65 +14,220 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 		Name:        "fastly_pool",
 		Description: "Pools in the Fastly account.",
 		List: &plugin.ListConfig{
-			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
-			ParentHydrate: hydrateServiceVersion,
-			Hydrate:       listPool,
+			ParentHydrate: listServiceVersions,
+			Hydrate:       listPools,
+			KeyColumns: []*plugin.KeyColumn{
+				{
+					Name:    "service_version",
+					Require: plugin.Optional,
+				},
+			},
+		},
+		Get: &plugin.GetConfig{
+			Hydrate:    getPool,
+			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
 		},
 		Columns: []*plugin.Column{
-			// Top columns
-			{Name: "id", Type: proto.ColumnType_STRING, Description: "Alphanumeric string identifying a Pool."},
-			{Name: "name", Type: proto.ColumnType_STRING, Description: "Name for the Pool."},
-			// Other columns
-			{Name: "comment", Type: proto.ColumnType_STRING, Description: "A freeform descriptive note."},
-			{Name: "connect_timeout", Type: proto.ColumnType_INT, Description: "How long to wait for a timeout in milliseconds. Optional."},
-			{Name: "created_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the pool was created."},
-			{Name: "deleted_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the pool was deleted."},
-			{Name: "first_byte_timeout", Type: proto.ColumnType_INT, Description: "How long to wait for the first byte in milliseconds. Optional."},
-			{Name: "healthcheck", Type: proto.ColumnType_STRING, Description: "Name of the healthcheck to use with this pool. Can be empty and could be reused across multiple backend and pools."},
-			{Name: "max_conn_default", Type: proto.ColumnType_INT, Description: "Maximum number of connections."},
-			{Name: "max_tls_version", Type: proto.ColumnType_STRING, Description: "Maximum allowed TLS version on connections to this server. Optional."},
-			{Name: "min_tls_version", Type: proto.ColumnType_STRING, Description: "Minimum allowed TLS version on connections to this server. Optional."},
-			{Name: "override_host", Type: proto.ColumnType_STRING, Description: "The hostname to override the Host header. Defaults to null meaning no override of the Host header will occur."},
-			{Name: "pool_type", Type: proto.ColumnType_STRING, Description: "What type of load balance group to use: random, hash, client."},
-			{Name: "quorum", Type: proto.ColumnType_INT, Description: "Percentage of capacity (0-100) that needs to be operationally available for a pool to be considered up."},
-			{Name: "request_condition", Type: proto.ColumnType_STRING, Description: "Condition which, if met, will select this configuration during a request. Optional."},
-			{Name: "service_id", Type: proto.ColumnType_STRING, Description: "Alphanumeric string identifying the service."},
-			{Name: "service_version", Type: proto.ColumnType_INT, Description: "Integer identifying a service version."},
-			{Name: "shield", Type: proto.ColumnType_STRING, Description: "Selected POP to serve as a shield for the servers. Defaults to null meaning no origin shielding if not set."},
-			{Name: "tls_ca_cert", Type: proto.ColumnType_STRING, Description: "A secure certificate to authenticate a server with. Must be in PEM format."},
-			{Name: "tls_cert_hostname", Type: proto.ColumnType_STRING, Description: "The hostname used to verify a server's certificate. It can either be the Common Name (CN) or a Subject Alternative Name (SAN)."},
-			{Name: "tls_check_cert", Type: proto.ColumnType_BOOL, Description: "Be strict on checking TLS certs. Optional."},
-			{Name: "tls_ciphers", Type: proto.ColumnType_STRING, Description: "List of OpenSSL ciphers."},
-			{Name: "tls_client_cert", Type: proto.ColumnType_STRING, Description: "The client certificate used to make authenticated requests. Must be in PEM format."},
-			{Name: "tls_client_key", Type: proto.ColumnType_STRING, Description: "The client private key used to make authenticated requests. Must be in PEM format."},
-			{Name: "tls_sni_hostname", Type: proto.ColumnType_STRING, Description: "SNI hostname. Optional."},
-			{Name: "updated_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the pool was updated."},
-			{Name: "use_tls", Type: proto.ColumnType_BOOL, Description: "Whether to use TLS."},
+			{
+				Name:        "id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying a Pool.",
+			},
+			{
+				Name:        "name",
+				Type:        proto.ColumnType_STRING,
+				Description: "Name for the Pool.",
+			},
+			{
+				Name:        "comment",
+				Type:        proto.ColumnType_STRING,
+				Description: "A freeform descriptive note.",
+			},
+			{
+				Name:        "connect_timeout",
+				Type:        proto.ColumnType_INT,
+				Description: "How long to wait for a timeout in milliseconds. Optional.",
+			},
+			{
+				Name:        "created_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the pool was created.",
+			},
+			{
+				Name:        "deleted_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the pool was deleted.",
+			},
+			{
+				Name:        "first_byte_timeout",
+				Type:        proto.ColumnType_INT,
+				Description: "How long to wait for the first byte in milliseconds. Optional.",
+			},
+			{
+				Name:        "healthcheck",
+				Type:        proto.ColumnType_STRING,
+				Description: "Name of the healthcheck to use with this pool. Can be empty and could be reused across multiple backend and pools.",
+			},
+			{
+				Name:        "max_conn_default",
+				Type:        proto.ColumnType_INT,
+				Description: "Maximum number of connections.",
+			},
+			{
+				Name:        "max_tls_version",
+				Type:        proto.ColumnType_STRING,
+				Description: "Maximum allowed TLS version on connections to this server. Optional.",
+			},
+			{
+				Name:        "min_tls_version",
+				Type:        proto.ColumnType_STRING,
+				Description: "Minimum allowed TLS version on connections to this server. Optional.",
+			},
+			{
+				Name:        "override_host",
+				Type:        proto.ColumnType_STRING,
+				Description: "The hostname to override the Host header. Defaults to null meaning no override of the Host header will occur.",
+			},
+			{
+				Name:        "pool_type",
+				Type:        proto.ColumnType_STRING,
+				Description: "What type of load balance group to use: random, hash, client.",
+			},
+			{
+				Name:        "quorum",
+				Type:        proto.ColumnType_INT,
+				Description: "Percentage of capacity (0-100) that needs to be operationally available for a pool to be considered up.",
+			},
+			{
+				Name:        "request_condition",
+				Type:        proto.ColumnType_STRING,
+				Description: "Condition which, if met, will select this configuration during a request. Optional.",
+			},
+			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+			},
+			{
+				Name:        "service_version",
+				Type:        proto.ColumnType_INT,
+				Description: "Integer identifying a service version.",
+			},
+			{
+				Name:        "shield",
+				Type:        proto.ColumnType_STRING,
+				Description: "Selected POP to serve as a shield for the servers. Defaults to null meaning no origin shielding if not set.",
+			},
+			{
+				Name:        "tls_ca_cert",
+				Type:        proto.ColumnType_STRING,
+				Description: "A secure certificate to authenticate a server with. Must be in PEM format.",
+			},
+			{
+				Name:        "tls_cert_hostname",
+				Type:        proto.ColumnType_STRING,
+				Description: "The hostname used to verify a server's certificate. It can either be the Common Name (CN) or a Subject Alternative Name (SAN).",
+			},
+			{
+				Name:        "tls_check_cert",
+				Type:        proto.ColumnType_BOOL,
+				Description: "Be strict on checking TLS certs. Optional.",
+			},
+			{
+				Name:        "tls_ciphers",
+				Type:        proto.ColumnType_STRING,
+				Description: "List of OpenSSL ciphers.",
+			},
+			{
+				Name:        "tls_client_cert",
+				Type:        proto.ColumnType_STRING,
+				Description: "The client certificate used to make authenticated requests. Must be in PEM format.",
+			},
+			{
+				Name:        "tls_client_key",
+				Type:        proto.ColumnType_STRING,
+				Description: "The client private key used to make authenticated requests. Must be in PEM format.",
+			},
+			{
+				Name:        "tls_sni_hostname",
+				Type:        proto.ColumnType_STRING,
+				Description: "SNI hostname. Optional.",
+			},
+			{
+				Name:        "updated_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the pool was updated.",
+			},
+			{
+				Name:        "use_tls",
+				Type:        proto.ColumnType_BOOL,
+				Description: "Whether to use TLS.",
+			},
 		},
 	}
 }
 
-func listPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, _, err := connect(ctx, d)
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_pool.listPool", "connection_error", err)
-		return nil, err
-	}
+func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	version := h.Item.(*fastly.Version)
-	plugin.Logger(ctx).Warn("fastly_pool.listPool", "version", version)
-	items, err := conn.ListPools(&fastly.ListPoolsInput{ServiceID: version.ServiceID, ServiceVersion: int(version.Number)})
+
+	// check if the provided service_version is not matching with the parentHydrate
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_pool.listPool", "query_error", err)
+		plugin.Logger(ctx).Error("fastly_pool.listPools", "connection_error", err)
 		return nil, err
 	}
-	for _, i := range items {
-		d.StreamListItem(ctx, i)
+	input := &fastly.ListPoolsInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: version.Number,
 	}
+	items, err := serviceClient.Client.ListPools(input)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_pool.listPools", "api_error", err)
+		return nil, err
+	}
+
+	for _, item := range items {
+		d.StreamListItem(ctx, item)
+	}
+
 	return nil, nil
 }
 
+func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQualString("name")
+
+	// check if the name is empty
+	if name == "" {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_pool.getPool", "connection_error", err)
+		return nil, err
+	}
+
+	input := &fastly.GetPoolInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceVersion,
+		Name:           name,
+	}
+	result, err := serviceClient.Client.GetPool(input)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_pool.getPool", "api_error", err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "connection_error", err)
 		return nil, err
@@ -80,12 +235,12 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 
 	if d.EqualsQuals["service_id"] != nil {
 
-		serviceID = d.EqualsQuals["service_id"].GetStringValue()
+		serviceID := d.EqualsQuals["service_id"].GetStringValue()
 
 		if d.EqualsQuals["service_version"] != nil {
 			serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 			input := fastly.GetVersionInput{ServiceID: serviceID, ServiceVersion: serviceVersion}
-			version, err := conn.GetVersion(&input)
+			version, err := serviceClient.Client.GetVersion(&input)
 			if err != nil {
 				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err, "input", input)
 				return nil, err
@@ -93,7 +248,7 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 			d.StreamListItem(ctx, version)
 		} else {
 			// List all versions for the service
-			items, err := conn.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceID})
+			items, err := serviceClient.Client.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceID})
 			if err != nil {
 				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err)
 				return nil, err
@@ -106,7 +261,7 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 	} else {
 
 		// No service specified, so list all versions of all services
-		services, err := conn.ListServices(&fastly.ListServicesInput{})
+		services, err := serviceClient.Client.ListServices(&fastly.ListServicesInput{})
 		if err != nil {
 			plugin.Logger(ctx).Error("fastly_service.listService", "query_error", err)
 			return nil, err
@@ -119,7 +274,7 @@ func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.H
 			input := fastly.GetVersionInput{ServiceID: i.ID, ServiceVersion: serviceVersion}
 			plugin.Logger(ctx).Warn("hydrateServiceVersion", "i.ID", i.ID)
 			plugin.Logger(ctx).Warn("hydrateServiceVersion", "serviceVersion", serviceVersion)
-			version, err := conn.GetVersion(&input)
+			version, err := serviceClient.Client.GetVersion(&input)
 			plugin.Logger(ctx).Warn("hydrateServiceVersion", "version", version)
 			if err != nil {
 				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err, "input", input)

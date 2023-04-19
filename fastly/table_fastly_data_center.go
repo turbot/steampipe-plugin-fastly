@@ -13,33 +13,69 @@ func tableFastlyDataCenter(ctx context.Context) *plugin.Table {
 		Name:        "fastly_data_center",
 		Description: "Data centers in the Fastly network.",
 		List: &plugin.ListConfig{
-			Hydrate: listDataCenter,
+			Hydrate: listDataCenters,
 		},
 		Columns: []*plugin.Column{
-			// Top columns
-			{Name: "code", Type: proto.ColumnType_STRING, Description: "Data center location code, e.g. BNE."},
-			{Name: "name", Type: proto.ColumnType_STRING, Description: "Name of the data center."},
-			{Name: "location_group", Type: proto.ColumnType_STRING, Transform: transform.FromField("Group"), Description: "Location group, e.g. Europe."},
-			{Name: "longitude", Type: proto.ColumnType_DOUBLE, Transform: transform.FromField("Coordinates.Longtitude"), Description: "Location longitude."},
-			{Name: "latitude", Type: proto.ColumnType_DOUBLE, Transform: transform.FromField("Coordinates.Latitude"), Description: "Location latitude."},
-			{Name: "shield", Type: proto.ColumnType_STRING, Description: "Data center shield."},
+			{
+				Name:        "code",
+				Type:        proto.ColumnType_STRING,
+				Description: "Data center location code, e.g. BNE.",
+			},
+			{
+				Name:        "name",
+				Type:        proto.ColumnType_STRING,
+				Description: "Name of the data center.",
+			},
+			{
+				Name:        "group",
+				Type:        proto.ColumnType_STRING,
+				Description: "Location group, e.g. Europe.",
+			},
+			{
+				Name:        "longitude",
+				Type:        proto.ColumnType_DOUBLE,
+				Transform:   transform.FromField("Coordinates.Longtitude"),
+				Description: "Location longitude.",
+			},
+			{
+				Name:        "latitude",
+				Type:        proto.ColumnType_DOUBLE,
+				Transform:   transform.FromField("Coordinates.Latitude"),
+				Description: "Location latitude.",
+			},
+			{
+				Name:        "shield",
+				Type:        proto.ColumnType_STRING,
+				Description: "Data center shield.",
+			},
+
+			/// Steampipe standard columns
+			{
+				Name:        "title",
+				Description: "Title of the resource.",
+				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Name"),
+			},
 		},
 	}
 }
 
-func listDataCenter(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
-	conn, _, err := connect(ctx, d)
+func listDataCenters(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_data_center.listDataCenter", "connection_error", err)
+		plugin.Logger(ctx).Error("fastly_data_center.listDataCenters", "connection_error", err)
 		return nil, err
 	}
-	items, err := conn.AllDatacenters()
+
+	items, err := serviceClient.Client.AllDatacenters()
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_data_center.listDataCenter", "query_error", err)
+		plugin.Logger(ctx).Error("fastly_data_center.listDataCenters", "api_error", err)
 		return nil, err
 	}
-	for _, i := range items {
-		d.StreamListItem(ctx, i)
+
+	for _, item := range items {
+		d.StreamListItem(ctx, item)
 	}
+
 	return nil, nil
 }

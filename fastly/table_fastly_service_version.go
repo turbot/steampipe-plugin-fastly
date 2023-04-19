@@ -66,13 +66,13 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 }
 
 func listServiceVersions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersions", "connection_error", err)
 		return nil, err
 	}
 
-	items, err := conn.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceID})
+	items, err := serviceClient.Client.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceClient.ServiceID})
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersions", "api_error", err)
 		return nil, err
@@ -90,16 +90,16 @@ func listServiceVersions(ctx context.Context, d *plugin.QueryData, h *plugin.Hyd
 }
 
 func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "connection_error", err)
 		return nil, err
 	}
 
 	number := int(d.EqualsQuals["number"].GetInt64Value())
-	input := fastly.GetVersionInput{ServiceID: serviceID, ServiceVersion: number}
+	input := fastly.GetVersionInput{ServiceID: serviceClient.ServiceID, ServiceVersion: number}
 
-	version, err := conn.GetVersion(&input)
+	version, err := serviceClient.Client.GetVersion(&input)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "api_error", err)
 		return nil, err

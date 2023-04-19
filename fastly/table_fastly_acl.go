@@ -7,6 +7,7 @@ import (
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
 func tableFastlyACL(ctx context.Context) *plugin.Table {
@@ -14,61 +15,123 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 		Name:        "fastly_acl",
 		Description: "ACLs for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate:    listACL,
-			KeyColumns: plugin.AllColumns([]string{"service_version"}),
+			ParentHydrate: listServiceVersions,
+			Hydrate:       listACL,
+			KeyColumns: []*plugin.KeyColumn{
+				{
+					Name:    "service_version",
+					Require: plugin.Optional,
+				},
+			},
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getACL,
 			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
 		},
 		Columns: []*plugin.Column{
-			// Top columns
-			{Name: "id", Type: proto.ColumnType_STRING, Description: "The ID of the ACL."},
-			{Name: "name", Type: proto.ColumnType_STRING, Description: "The name of the ACL."},
-			// Other columns
-			{Name: "service_id", Type: proto.ColumnType_STRING, Description: "Alphanumeric string identifying the service."},
-			{Name: "service_version", Type: proto.ColumnType_INT, Description: "Integer identifying a service version."},
-			{Name: "created_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the ACL was created."},
-			{Name: "deleted_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the ACL was deleted."},
-			{Name: "updated_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the ACL was updated."},
+			{
+				Name:        "id",
+				Type:        proto.ColumnType_STRING,
+				Description: "The ID of the ACL.",
+			},
+			{
+				Name:        "name",
+				Type:        proto.ColumnType_STRING,
+				Description: "The name of the ACL.",
+			},
+			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+			},
+			{
+				Name:        "service_version",
+				Type:        proto.ColumnType_INT,
+				Description: "Integer identifying a service version.",
+			},
+			{
+				Name:        "created_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the ACL was created.",
+			},
+			{
+				Name:        "deleted_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the ACL was deleted.",
+			},
+			{
+				Name:        "updated_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the ACL was updated.",
+			},
+
+			/// Steampipe standard columns
+			{
+				Name:        "title",
+				Description: "Title of the resource.",
+				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Name"),
+			},
 		},
 	}
 }
 
 func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	version := h.Item.(*fastly.Version)
+
+	// check if the provided service_version is not matching with the parentHydrate
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_acl.listACL", "connection_error", err)
 		return nil, err
 	}
+
 	input := fastly.ListACLsInput{
-		ServiceID:      serviceID,
-		ServiceVersion: int(d.EqualsQuals["service_version"].GetInt64Value()),
+		ServiceID:      version.ServiceID,
+		ServiceVersion: version.Number,
 	}
-	items, err := conn.ListACLs(&input)
+
+	items, err := serviceClient.Client.ListACLs(&input)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_acl.listACL", "query_error", err)
 		return nil, err
 	}
-	for _, i := range items {
-		d.StreamListItem(ctx, i)
+	for _, item := range items {
+		d.StreamListItem(ctx, item)
 	}
+
 	return nil, nil
 }
 
 func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQuals["name"].GetStringValue()
+
+	// check if the name is empty
+	if name == "" {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_acl.getACL", "connection_error", err)
 		return nil, err
 	}
-	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
-	name := d.EqualsQuals["name"].GetStringValue()
-	input := fastly.GetACLInput{ServiceID: serviceID, ServiceVersion: serviceVersion, Name: name}
-	result, err := conn.GetACL(&input)
+	input := &fastly.GetACLInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceVersion,
+		Name:           name,
+	}
+
+	result, err := serviceClient.Client.GetACL(input)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_acl.getACL", "query_error", err, "input", input)
+		plugin.Logger(ctx).Error("fastly_service_acl.getACL", "api_error", err)
 		return nil, err
 	}
+
 	return result, nil
 }

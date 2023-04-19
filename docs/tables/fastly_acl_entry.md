@@ -2,7 +2,7 @@
 
 An ACL entry holds an individual IP address or subnet range and is a member of an ACL. ACL entries are versionless, which means they can be created, modified, or deleted without activating a new version of your service.
 
-Note: A `service_id` and `acl_id` must be provided in all queries to this table.
+Note: A `acl_id` must be provided in all queries to this table.
 
 ## Examples
 

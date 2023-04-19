@@ -81,13 +81,13 @@ func tableFastlyToken(ctx context.Context) *plugin.Table {
 }
 
 func listTokens(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
-	conn, _, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_token.listTokens", "connection_error", err)
 		return nil, err
 	}
 
-	items, err := conn.ListTokens()
+	items, err := serviceClient.Client.ListTokens()
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_token.listTokens", "query_error", err)
 		return nil, err

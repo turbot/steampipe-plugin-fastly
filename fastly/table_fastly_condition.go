@@ -15,39 +15,134 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 		Name:        "fastly_condition",
 		Description: "Conditions defined in the service version.",
 		List: &plugin.ListConfig{
-			Hydrate:    listCondition,
-			KeyColumns: plugin.AllColumns([]string{"service_version"}),
+			ParentHydrate: listServiceVersions,
+			Hydrate:       listConditions,
+			KeyColumns: []*plugin.KeyColumn{
+				{
+					Name:    "service_version",
+					Require: plugin.Optional,
+				},
+			},
+		},
+		Get: &plugin.GetConfig{
+			Hydrate:    getCondition,
+			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
 		},
 		Columns: []*plugin.Column{
-			// Top columns
-			{Name: "service_id", Type: proto.ColumnType_STRING, Description: "Alphanumeric string identifying the service."},
-			{Name: "service_version", Type: proto.ColumnType_INT, Transform: transform.FromQual("service_version"), Description: "Integer identifying a service version."},
-			{Name: "name", Type: proto.ColumnType_STRING, Description: "Name of the condition."},
-			// Other columns
-			{Name: "comment", Type: proto.ColumnType_STRING, Description: "A freeform descriptive note."},
-			{Name: "condition_type", Type: proto.ColumnType_STRING, Description: "Type of the condition."},
-			{Name: "created_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the condition was created."},
-			{Name: "deleted_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the condition was deleted."},
-			{Name: "priority", Type: proto.ColumnType_INT, Description: "Priority determines execution order. Lower numbers execute first."},
-			{Name: "statement", Type: proto.ColumnType_STRING, Description: "A conditional expression in VCL used to determine if the condition is met."},
-			{Name: "updated_at", Type: proto.ColumnType_TIMESTAMP, Description: "Timestamp (UTC) of when the condition was updated."},
+			{
+				Name:        "name",
+				Type:        proto.ColumnType_STRING,
+				Description: "Name of the condition.",
+			},
+			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+			},
+			{
+				Name:        "service_version",
+				Type:        proto.ColumnType_INT,
+				Description: "Integer identifying a service version.",
+			},
+			{
+				Name:        "comment",
+				Type:        proto.ColumnType_STRING,
+				Description: "A freeform descriptive note.",
+			},
+			{
+				Name:        "condition_type",
+				Type:        proto.ColumnType_STRING,
+				Description: "Type of the condition.",
+			},
+			{
+				Name:        "created_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the condition was created.",
+			},
+			{
+				Name:        "deleted_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the condition was deleted.",
+			},
+			{
+				Name:        "priority",
+				Type:        proto.ColumnType_INT,
+				Description: "Priority determines execution order. Lower numbers execute first.",
+			},
+			{
+				Name:        "statement",
+				Type:        proto.ColumnType_STRING,
+				Description: "A conditional expression in VCL used to determine if the condition is met.",
+			},
+			{
+				Name:        "updated_at",
+				Type:        proto.ColumnType_TIMESTAMP,
+				Description: "Timestamp (UTC) of when the condition was updated.",
+			},
+
+			/// Steampipe standard columns
+			{
+				Name:        "title",
+				Description: "Title of the resource.",
+				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Name"),
+			},
 		},
 	}
 }
 
-func listCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	conn, serviceID, err := connect(ctx, d)
+func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	version := h.Item.(*fastly.Version)
+
+	// check if the provided service_version is not matching with the parentHydrate
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.listCondition", "connection_error", err)
+		plugin.Logger(ctx).Error("fastly_condition.listConditions", "connection_error", err)
 		return nil, err
 	}
-	items, err := conn.ListConditions(&fastly.ListConditionsInput{ServiceID: serviceID, ServiceVersion: int(d.EqualsQuals["service_version"].GetInt64Value())})
+
+	items, err := serviceClient.Client.ListConditions(&fastly.ListConditionsInput{ServiceID: version.ServiceID, ServiceVersion: version.Number})
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.listCondition", "query_error", err)
+		plugin.Logger(ctx).Error("fastly_condition.listConditions", "api_error", err)
 		return nil, err
 	}
-	for _, i := range items {
-		d.StreamListItem(ctx, i)
+
+	for _, item := range items {
+		d.StreamListItem(ctx, item)
 	}
+
 	return nil, nil
+}
+
+func getCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
+	name := d.EqualsQualString("name")
+
+	// check if the name is empty
+	if name == "" {
+		return nil, nil
+	}
+
+	serviceClient, err := connect(ctx, d)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_condition.getCondition", "connection_error", err)
+		return nil, err
+	}
+
+	input := &fastly.GetConditionInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceVersion,
+		Name:           name,
+	}
+	result, err := serviceClient.Client.GetCondition(input)
+	if err != nil {
+		plugin.Logger(ctx).Error("fastly_condition.getCondition", "api_error", err)
+		return nil, err
+	}
+
+	return result, nil
 }

@@ -86,7 +86,7 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 }
 
 func listServices(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
-	conn, _, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service.listServices", "connection_error", err)
 		return nil, err
@@ -104,7 +104,7 @@ func listServices(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateDat
 	input := &fastly.ListServicesInput{
 		PerPage: maxLimit,
 	}
-	paginator := conn.NewListServicesPaginator(input)
+	paginator := serviceClient.Client.NewListServicesPaginator(input)
 	for {
 		if paginator.HasNext() {
 			items, err := paginator.GetNext()
@@ -137,13 +137,13 @@ func getService(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData)
 		return nil, nil
 	}
 
-	conn, _, err := connect(ctx, d)
+	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service.getService", "connection_error", err)
 		return nil, err
 	}
 
-	result, err := conn.GetServiceDetails(&fastly.GetServiceInput{ID: id})
+	result, err := serviceClient.Client.GetServiceDetails(&fastly.GetServiceInput{ID: id})
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service.getService", "api_error", err)
 		return nil, err
