@@ -17,19 +17,20 @@ func tableFastlyDataCenter(ctx context.Context) *plugin.Table {
 		},
 		Columns: []*plugin.Column{
 			{
-				Name:        "code",
-				Type:        proto.ColumnType_STRING,
-				Description: "Data center location code, e.g. BNE.",
-			},
-			{
 				Name:        "name",
 				Type:        proto.ColumnType_STRING,
 				Description: "Name of the data center.",
 			},
 			{
-				Name:        "group",
+				Name:        "code",
+				Type:        proto.ColumnType_STRING,
+				Description: "Data center location code, e.g. BNE.",
+			},
+			{
+				Name:        "location_group",
 				Type:        proto.ColumnType_STRING,
 				Description: "Location group, e.g. Europe.",
+				Transform:   transform.FromField("Group"),
 			},
 			{
 				Name:        "longitude",

@@ -14,11 +14,12 @@ func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 		Name:        "fastly_acl_entry",
 		Description: "ACL entries for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listACLEntries,
+			ParentHydrate: listACL,
+			Hydrate:       listACLEntries,
 			KeyColumns: []*plugin.KeyColumn{
 				{
 					Name:    "acl_id",
-					Require: plugin.Required,
+					Require: plugin.Optional,
 				},
 			},
 		},
@@ -28,14 +29,14 @@ func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 		},
 		Columns: []*plugin.Column{
 			{
-				Name:        "acl_id",
-				Type:        proto.ColumnType_STRING,
-				Description: "Alphanumeric string identifying a ACL.",
-			},
-			{
 				Name:        "id",
 				Type:        proto.ColumnType_STRING,
 				Description: "The ID of the ACL entry.",
+			},
+			{
+				Name:        "acl_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying a ACL.",
 			},
 			{
 				Name:        "ip",
@@ -85,6 +86,13 @@ func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 }
 
 func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	acl := h.Item.(*fastly.ACL)
+
+	// check if the provided acl_id is not matching with the parentHydrate
+	if d.EqualsQuals["acl_id"] != nil && d.EqualsQualString("acl_id") != acl.ID {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_acl_entry.listACLEntries", "connection_error", err)
@@ -102,7 +110,7 @@ func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 
 	input := &fastly.ListACLEntriesInput{
 		ServiceID: serviceClient.ServiceID,
-		ACLID:     d.EqualsQuals["acl_id"].GetStringValue(),
+		ACLID:     acl.ID,
 		PerPage:   maxLimit,
 	}
 

@@ -6,19 +6,23 @@ import (
 )
 
 type fastlyConfig struct {
-	APIKey    *string `cty:"api_key"`
-	ServiceID *string `cty:"service_id"`
-	BaseURL   *string `cty:"base_url"`
+	APIKey         *string `cty:"api_key"`
+	BaseURL        *string `cty:"base_url"`
+	ServiceID      *string `cty:"service_id"`
+	ServiceVersion *string `cty:"service_version"`
 }
 
 var ConfigSchema = map[string]*schema.Attribute{
 	"api_key": {
 		Type: schema.TypeString,
 	},
+	"base_url": {
+		Type: schema.TypeString,
+	},
 	"service_id": {
 		Type: schema.TypeString,
 	},
-	"base_url": {
+	"service_version": {
 		Type: schema.TypeString,
 	},
 }

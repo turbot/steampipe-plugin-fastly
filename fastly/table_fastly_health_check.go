@@ -14,18 +14,11 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 		Name:        "fastly_health_check",
 		Description: "Health checks for the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServiceVersions,
-			Hydrate:       listHealthChecks,
-			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "service_version",
-					Require: plugin.Optional,
-				},
-			},
+			Hydrate: listHealthChecks,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getHealthCheck,
-			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
+			KeyColumns: plugin.SingleColumn("name"),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -119,13 +112,6 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 }
 
 func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	version := h.Item.(*fastly.Version)
-
-	// check if the provided service_version is not matching with the parentHydrate
-	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
-		return nil, nil
-	}
-
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_health_check.listHealthChecks", "connection_error", err)
@@ -133,7 +119,7 @@ func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 	}
 	input := &fastly.ListHealthChecksInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: version.Number,
+		ServiceVersion: serviceClient.ServiceVersion,
 	}
 	items, err := serviceClient.Client.ListHealthChecks(input)
 	if err != nil {
@@ -149,7 +135,6 @@ func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 }
 
 func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 	name := d.EqualsQualString("name")
 
 	// check if the name is empty
@@ -165,7 +150,7 @@ func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 
 	input := &fastly.GetHealthCheckInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceVersion,
+		ServiceVersion: serviceClient.ServiceVersion,
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetHealthCheck(input)

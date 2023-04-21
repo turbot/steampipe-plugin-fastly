@@ -15,12 +15,11 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 		Name:        "fastly_service_domain",
 		Description: "Domains for the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServiceVersions,
-			Hydrate:       listServiceDomains,
+			Hydrate: listServiceDomains,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getServiceDomain,
-			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
+			KeyColumns: plugin.SingleColumn("name"),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -76,10 +75,10 @@ func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.Hydr
 		plugin.Logger(ctx).Error("fastly_service_domain.listServiceDomains", "connection_error", err)
 		return nil, err
 	}
-	version := h.Item.(*fastly.Version)
+
 	input := &fastly.ListDomainsInput{
-		ServiceID:      version.ServiceID,
-		ServiceVersion: version.Number,
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceClient.ServiceVersion,
 	}
 	items, err := serviceClient.Client.ListDomains(input)
 	if err != nil {
@@ -100,7 +99,12 @@ func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.Hydr
 
 func getServiceDomain(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
-	service_version := int(d.EqualsQuals["service_version"].GetInt64Value())
+
+	// check if the name is empty
+	if name == "" {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_domain.getServiceDomain", "connection_error", err)
@@ -109,7 +113,7 @@ func getServiceDomain(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 
 	input := &fastly.GetDomainInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: service_version,
+		ServiceVersion: serviceClient.ServiceVersion,
 		Name:           name,
 	}
 	item, err := serviceClient.Client.GetDomain(input)

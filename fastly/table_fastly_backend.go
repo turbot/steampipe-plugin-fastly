@@ -15,18 +15,11 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 		Name:        "fastly_backend",
 		Description: "Backends for the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServiceVersions,
-			Hydrate:       listBackends,
-			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "service_version",
-					Require: plugin.Optional,
-				},
-			},
+			Hydrate: listBackends,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getBackend,
-			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
+			KeyColumns: plugin.SingleColumn("name"),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -196,20 +189,17 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 }
 
 func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	version := h.Item.(*fastly.Version)
-
-	// check if the provided service_version is not matching with the parentHydrate
-	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
-		return nil, nil
-	}
-
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_backend.listBackends", "connection_error", err)
 		return nil, err
 	}
 
-	items, err := serviceClient.Client.ListBackends(&fastly.ListBackendsInput{ServiceID: version.ServiceID, ServiceVersion: version.Number})
+	input := &fastly.ListBackendsInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceClient.ServiceVersion,
+	}
+	items, err := serviceClient.Client.ListBackends(input)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_backend.listBackends", "api_error", err)
 		return nil, err
@@ -222,7 +212,6 @@ func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 }
 
 func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 	name := d.EqualsQualString("name")
 
 	// check if the name is empty
@@ -238,7 +227,7 @@ func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData)
 
 	input := &fastly.GetBackendInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceVersion,
+		ServiceVersion: serviceClient.ServiceVersion,
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetBackend(input)

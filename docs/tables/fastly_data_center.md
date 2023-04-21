@@ -4,29 +4,52 @@ Data centers in the Fastly network.
 
 ## Examples
 
-### List all data centers
+### Basic info
 
 ```sql
 select
-  *
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
 from
-  fastly_data_center
-order by
-  name
+  fastly_data_center;
 ```
 
-### Get data center by code
+### Show data center detail for a particular code
 
 ```sql
 select
-  *
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
 from
   fastly_data_center
 where
-  code = 'BNE'
+  code = 'BNE';
+```
+### List data centers of Europe
+
+```sql
+select
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
+from
+  fastly_data_center
+where
+  location_group = 'Europe';
 ```
 
-### Data center counts by location group
+### Show Data center counts by location group
 
 ```sql
 select
@@ -37,5 +60,5 @@ from
 group by
   location_group
 order by
-  count desc
+  count desc;
 ```

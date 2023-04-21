@@ -4,69 +4,64 @@ Conditions are used to control whether logic defined in configured VCL objects i
 
 ## Examples
 
-### List all conditions for a service version
+### Basic info
 
 ```sql
 select
-  *
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
+from
+  fastly_condition;
+```
+
+### List conditions that are not deleted
+
+```sql
+select
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
 from
   fastly_condition
 where
-  service_id = '1crAGGWV3PnZEibiZ9FsJT'
-  and service_version = 2
+  deleted_at is null;
 ```
 
-### All conditions for active service versions
+### List conditions that are cache type
 
 ```sql
 select
-  c.*
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
 from
-  fastly_service as s,
-  fastly_condition as c
+  fastly_condition
 where
-  s.id = c.service_id
-  and s.active_version = c.service_version
+  type = 'CACHE';
 ```
 
-### All conditions for all service versions
+### List conditions that are high priority
 
 ```sql
 select
-  c.*
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
 from
-  fastly_service as s,
-  fastly_service_version as v,
-  fastly_condition as c
+  fastly_condition
 where
-  s.id = v.service_id
-  and s.id = c.service_id
-  and v.number = c.service_version
-```
-
-```sql
-select
-  c.*
-from
-  fastly_service as s,
-  fastly_service_version as v,
-  fastly_condition as c
-where
-  s.id = v.service_id
-  and v.service_id = c.service_id
-  and v.number = c.service_version
-```
-
-Unfortunately, this approach through the JSONB object does not work (yet, as of Jul 2021):
-
-```sql
-select
-  c.*
-from
-  fastly_service as s,
-  jsonb_array_elements(s.versions) as v,
-  fastly_condition as c
-where
-  s.id = c.service_id
-  and (v->'Number')::int = c.service_version
+  priority = 1;
 ```

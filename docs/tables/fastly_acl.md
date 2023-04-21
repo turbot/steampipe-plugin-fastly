@@ -2,47 +2,52 @@
 
 An access control list or "ACL" specifies individual IP addresses or subnet ranges and can be accessed and used from Fastly VCL.
 
-Note: A `service_id` and `service_version` must be provided in all queries to this table.
-
 ## Examples
 
-### List all ACLs for a service version
+### Basic info
 
 ```sql
 select
-  *
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
+from
+  fastly_acl;
+```
+
+### List ACLs that are deleted
+
+```sql
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
 from
   fastly_acl
 where
-  service_id = '1crAGGWV3PnZEibiZ9FsJT'
-  and service_version = 2
+  deleted_at is null;
 ```
 
-### List all ACLs for all service versions
+### List ACLs where the service version is inactive
 
 ```sql
 select
-  *
+  id,
+  name,
+  a.service_id,
+  service_version,
+  a.created_at
 from
-  fastly_service_version as v,
-  fastly_acl as acl
+  fastly_acl as a,
+  fastly_service_version as v
 where
-  acl.service_id = v.service_id
-  and acl.service_version = v.number
-```
-
-### List all ACLs and their entries for all service versions
-
-```sql
-select
-  *
-from
-  fastly_service_version as v,
-  fastly_acl as acl,
-  fastly_acl_entry as e
-where
-  acl.service_id = v.service_id
-  and acl.service_version = v.number
-  and e.service_id = v.service_id
-  and e.acl_id = acl.id
+  a.service_id = v.service_id
+  and a.service_version = v.number
+  and not v.active;
 ```

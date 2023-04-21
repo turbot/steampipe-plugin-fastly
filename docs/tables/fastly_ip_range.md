@@ -4,33 +4,36 @@ IP ranges in the Fastly network.
 
 ## Examples
 
-### List all IP ranges
+### Basic info
 
 ```sql
 select
-  *
+  cidr,
+  version
 from
-  fastly_ip_range
+  fastly_ip_range;
 ```
 
-### IP ranges inside a range
+### List IP ranges inside a range
 
 ```sql
 select
-  *
+  cidr,
+  version
 from
   fastly_ip_range
 where
-  cidr << '199.0.0.0/8'
+  cidr << '199.0.0.0/8';
 ```
 
-### IPv6 ranges
+### Show IPv6 ranges
 
 ```sql
 select
-  *
+  cidr,
+  version
 from
   fastly_ip_range
 where
-  version = 6
+  version = 6;
 ```

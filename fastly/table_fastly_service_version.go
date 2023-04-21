@@ -14,11 +14,7 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 		Name:        "fastly_service_version",
 		Description: "Service versions in the Fastly account.",
 		List: &plugin.ListConfig{
-			Hydrate: listServiceVersions,
-		},
-		Get: &plugin.GetConfig{
-			Hydrate:    getServiceVersion,
-			KeyColumns: plugin.SingleColumn("number"),
+			Hydrate: getServiceVersion,
 		},
 		Columns: []*plugin.Column{
 			{
@@ -65,30 +61,6 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 	}
 }
 
-func listServiceVersions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceClient, err := connect(ctx, d)
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersions", "connection_error", err)
-		return nil, err
-	}
-
-	items, err := serviceClient.Client.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceClient.ServiceID})
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersions", "api_error", err)
-		return nil, err
-	}
-	for _, item := range items {
-		d.StreamListItem(ctx, item)
-
-		// Context can be cancelled due to manual cancellation or the limit has been hit
-		if d.RowsRemaining(ctx) == 0 {
-			return nil, nil
-		}
-	}
-
-	return nil, nil
-}
-
 func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -96,14 +68,17 @@ func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.Hydra
 		return nil, err
 	}
 
-	number := int(d.EqualsQuals["number"].GetInt64Value())
-	input := fastly.GetVersionInput{ServiceID: serviceClient.ServiceID, ServiceVersion: number}
+	input := &fastly.GetVersionInput{
+		ServiceID:      serviceClient.ServiceID,
+		ServiceVersion: serviceClient.ServiceVersion,
+	}
 
-	version, err := serviceClient.Client.GetVersion(&input)
+	version, err := serviceClient.Client.GetVersion(input)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "api_error", err)
 		return nil, err
 	}
+	d.StreamListItem(ctx, version)
 
-	return version, nil
+	return nil, nil
 }

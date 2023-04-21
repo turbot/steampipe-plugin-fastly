@@ -15,18 +15,11 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 		Name:        "fastly_dictionary",
 		Description: "Dictionaries for the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServiceVersions,
-			Hydrate:       listDictionaries,
-			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "service_version",
-					Require: plugin.Optional,
-				},
-			},
+			Hydrate: listDictionaries,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getDictionary,
-			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
+			KeyColumns: plugin.SingleColumn("name"),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -83,13 +76,6 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 }
 
 func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	version := h.Item.(*fastly.Version)
-
-	// check if the provided service_version is not matching with the parentHydrate
-	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
-		return nil, nil
-	}
-
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_dictionary.listDictionaries", "connection_error", err)
@@ -97,7 +83,7 @@ func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 	}
 	input := fastly.ListDictionariesInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: version.Number,
+		ServiceVersion: serviceClient.ServiceVersion,
 	}
 	items, err := serviceClient.Client.ListDictionaries(&input)
 	if err != nil {
@@ -112,7 +98,6 @@ func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 }
 
 func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 	name := d.EqualsQualString("name")
 
 	// check if the name is empty
@@ -128,7 +113,7 @@ func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDa
 
 	input := &fastly.GetDictionaryInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceVersion,
+		ServiceVersion: serviceClient.ServiceVersion,
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetDictionary(input)

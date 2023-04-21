@@ -2,31 +2,73 @@
 
 A pool is responsible for balancing requests among a group of servers.
 
-Note: A `service_id` and `service_version` must be provided in all queries to this table.
-
 ## Examples
 
-### List all pools for a service version
+### Basic info
 
 ```sql
 select
-  *
+  id,
+  name,
+  connect_timeout,
+  created_at,
+  healthcheck,
+  service_id,
+  service_version
+from
+  fastly_pool;
+```
+
+### List pools that are not deleted
+
+```sql
+select
+  id,
+  name,
+  connect_timeout,
+  created_at,
+  healthcheck,
+  service_id,
+  service_version
 from
   fastly_pool
 where
-  service_id = '1crAGGWV3PnZEibiZ9FsJT'
-  and service_version = 2
+  deleted_at is null;
 ```
 
-### All pools for active service versions
+### List random pools
 
 ```sql
 select
-  c.*
+  id,
+  name,
+  connect_timeout,
+  created_at,
+  healthcheck,
+  service_id,
+  service_version
 from
-  fastly_service as s,
-  fastly_pool as c
+  fastly_pool
 where
-  s.id = c.service_id
-  and s.active_version = c.service_version
+  pool_type = 'random';
+```
+
+### List pools of the active versions
+
+```sql
+select
+  id,
+  name,
+  connect_timeout,
+  p.created_at,
+  healthcheck,
+  p.service_id,
+  service_version
+from
+  fastly_pool as p,
+  fastly_service_version as v
+where
+  p.service_id = v.service_id
+  and p.service_version = v.number
+  and v.active;
 ```

@@ -14,18 +14,11 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 		Name:        "fastly_pool",
 		Description: "Pools in the Fastly account.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServiceVersions,
-			Hydrate:       listPools,
-			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "service_version",
-					Require: plugin.Optional,
-				},
-			},
+			Hydrate: listPools,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getPool,
-			KeyColumns: plugin.AllColumns([]string{"service_version", "name"}),
+			KeyColumns: plugin.SingleColumn("name"),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -168,13 +161,6 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 }
 
 func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	version := h.Item.(*fastly.Version)
-
-	// check if the provided service_version is not matching with the parentHydrate
-	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != version.Number {
-		return nil, nil
-	}
-
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_pool.listPools", "connection_error", err)
@@ -182,7 +168,7 @@ func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) 
 	}
 	input := &fastly.ListPoolsInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: version.Number,
+		ServiceVersion: serviceClient.ServiceVersion,
 	}
 	items, err := serviceClient.Client.ListPools(input)
 	if err != nil {
@@ -198,7 +184,6 @@ func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) 
 }
 
 func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
 	name := d.EqualsQualString("name")
 
 	// check if the name is empty
@@ -214,7 +199,7 @@ func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 
 	input := &fastly.GetPoolInput{
 		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceVersion,
+		ServiceVersion: serviceClient.ServiceVersion,
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetPool(input)
@@ -224,66 +209,4 @@ func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 	}
 
 	return result, nil
-}
-
-func hydrateServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceClient, err := connect(ctx, d)
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "connection_error", err)
-		return nil, err
-	}
-
-	if d.EqualsQuals["service_id"] != nil {
-
-		serviceID := d.EqualsQuals["service_id"].GetStringValue()
-
-		if d.EqualsQuals["service_version"] != nil {
-			serviceVersion := int(d.EqualsQuals["service_version"].GetInt64Value())
-			input := fastly.GetVersionInput{ServiceID: serviceID, ServiceVersion: serviceVersion}
-			version, err := serviceClient.Client.GetVersion(&input)
-			if err != nil {
-				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err, "input", input)
-				return nil, err
-			}
-			d.StreamListItem(ctx, version)
-		} else {
-			// List all versions for the service
-			items, err := serviceClient.Client.ListVersions(&fastly.ListVersionsInput{ServiceID: serviceID})
-			if err != nil {
-				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err)
-				return nil, err
-			}
-			for _, i := range items {
-				d.StreamListItem(ctx, i)
-			}
-		}
-
-	} else {
-
-		// No service specified, so list all versions of all services
-		services, err := serviceClient.Client.ListServices(&fastly.ListServicesInput{})
-		if err != nil {
-			plugin.Logger(ctx).Error("fastly_service.listService", "query_error", err)
-			return nil, err
-		}
-		for _, i := range services {
-			serviceVersion := int(i.ActiveVersion)
-			if d.EqualsQuals["service_version"] != nil {
-				serviceVersion = int(d.EqualsQuals["service_version"].GetInt64Value())
-			}
-			input := fastly.GetVersionInput{ServiceID: i.ID, ServiceVersion: serviceVersion}
-			plugin.Logger(ctx).Warn("hydrateServiceVersion", "i.ID", i.ID)
-			plugin.Logger(ctx).Warn("hydrateServiceVersion", "serviceVersion", serviceVersion)
-			version, err := serviceClient.Client.GetVersion(&input)
-			plugin.Logger(ctx).Warn("hydrateServiceVersion", "version", version)
-			if err != nil {
-				plugin.Logger(ctx).Error("fastly_service_version.listServiceVersion", "query_error", err, "input", input)
-				return nil, err
-			}
-			d.StreamListItem(ctx, version)
-		}
-
-	}
-
-	return nil, nil
 }
