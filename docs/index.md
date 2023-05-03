@@ -2,7 +2,7 @@
 organization: Turbot
 category: ["internet"]
 icon_url: "/images/plugins/turbot/fastly.svg"
-brand_color: "#EB423B"
+brand_color: "#FF282D"
 display_name: "Fastly"
 short_name: "fastly"
 description: "Steampipe plugin to query services, acls, domains and more from Fastly."
