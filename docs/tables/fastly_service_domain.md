@@ -11,7 +11,9 @@ select
   name,
   service_id,
   service_version,
-  created_at
+  comment,
+  created_at,
+  updated_at
 from
   fastly_service_domain;
 ```
