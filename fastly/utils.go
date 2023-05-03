@@ -3,7 +3,6 @@ package fastly
 import (
 	"context"
 	"os"
-	"path"
 	"strconv"
 
 	"github.com/fastly/go-fastly/v8/fastly"
@@ -53,8 +52,14 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 		return nil, errors.New("'api_key' and 'service_id' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
 	}
 
-	sc := &serviceClient{}
+	sv, _ := strconv.Atoi(serviceVersion)
 
+	sc := &serviceClient{
+		ServiceID:      serviceID,
+		ServiceVersion: sv,
+	}
+
+	// check if a base URL is provided in config
 	if baseURL != "" {
 		conn, err := fastly.NewClientForEndpoint(apiKey, baseURL)
 		if err != nil {
@@ -68,28 +73,25 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 		}
 		sc.Client = conn
 	}
-	sc.ServiceID = serviceID
 
-	// set active/latest version if version is not provided in config
+	// set active version if version is not provided in config
 	if serviceVersion == "" {
 		version, err := getActiveVersion(sc.Client, apiKey, serviceID, d)
 		if err != nil {
 			return nil, err
 		}
+		sc.ServiceVersion = *version
+
 		// set the latest version if there is no active version available for the service
-		if *version == 0 {
+		if sc.ServiceVersion == 0 {
 			latestVersion, err := getLatestVersion(sc.Client, apiKey, serviceID, d)
 			if err != nil {
 				return nil, err
 			}
 			sc.ServiceVersion = latestVersion.Number
-		} else { // set the active version
-			sc.ServiceVersion = *version
 		}
-	} else { // set the version provided in config
-		sc.ServiceVersion, _ = strconv.Atoi(serviceVersion)
 	}
-	plugin.Logger(ctx).Error("version", sc.ServiceVersion)
+
 	// Save to cache
 	d.ConnectionManager.Cache.Set(cacheKey, sc)
 
@@ -128,17 +130,4 @@ func getLatestVersion(client *fastly.Client, apiKey string, serviceID string, d 
 	d.ConnectionManager.Cache.Set(cacheKey, version)
 
 	return version, nil
-}
-
-// shouldIgnoreErrors:: function which returns an ErrorPredicate for Aiven API calls
-func shouldIgnoreErrors(notFoundErrors []string) plugin.ErrorPredicateWithContext {
-	return func(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData, err error) bool {
-		for _, pattern := range notFoundErrors {
-			// handle not found error
-			if ok, _ := path.Match(pattern, "404"); ok {
-				return true
-			}
-		}
-		return false
-	}
 }

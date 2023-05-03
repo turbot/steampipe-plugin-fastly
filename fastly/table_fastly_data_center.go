@@ -26,6 +26,7 @@ func tableFastlyDataCenter(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_STRING,
 				Description: "Data center location code, e.g. BNE.",
 			},
+			// group is a keyword in PostgreSQL, so here transform function has been used
 			{
 				Name:        "location_group",
 				Type:        proto.ColumnType_STRING,

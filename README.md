@@ -2,30 +2,88 @@
 
 # Fastly Plugin for Steampipe
 
-Use SQL to query instances, domains and more from Fastly.
+Use SQL to query services, acls, domains and more from Fastly.
 
 - **[Get started →](https://hub.steampipe.io/plugins/turbot/fastly)**
 - Documentation: [Table definitions & examples](https://hub.steampipe.io/plugins/turbot/fastly/tables)
-- Community: [Slack Channel](https://join.slack.com/t/steampipe/shared_invite/zt-oij778tv-lYyRTWOTMQYBVAbtPSWs3g)
+- Community: [Slack Channel](https://steampipe.io/community/join)
 - Get involved: [Issues](https://github.com/turbot/steampipe-plugin-fastly/issues)
 
 ## Quick start
 
-Install the plugin with [Steampipe](https://steampipe.io):
+Download and install the latest Fastly plugin:
 
-```shell
+```bash
 steampipe plugin install fastly
 ```
 
-Run a query:
+Configure your [credentials](https://hub.steampipe.io/plugins/turbot/fastly#credentials) and [config file](https://hub.steampipe.io/plugins/turbot/fastly#configuration).
+
+### Configuring Fastly Credentials
+
+Configure your account details in `~/.steampipe/config/fastly.spc`:
+
+You may specify the API Key and Service ID to authenticate:
+
+- `api_key`: The fastly API Token.
+- `service_id`: The fastly Service ID.
+
+```hcl
+connection "fastly" {
+  plugin     = "fastly"
+  api_key    = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
+  service_id = "2ctACCWV5PmZGadiS7Ft5T"
+}
+```
+
+or you may specify the API Key, Service ID, Base URL and Service Version to authenticate:
+
+- `api_key`: The fastly API Token.
+- `service_id`: The fastly Service ID.
+- `base_url`: The fastly base URL.
+- `service_version`: The fastly Service version.
+
+```hcl
+connection "fastly" {
+  plugin          = "fastly"
+  api_key         = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
+  service_id      = "2ctACCWV5PmZGadiS7Ft5T"
+  base_url        = "https://api.fastly.com"
+  service_version = "1"
+}
+```
+
+or through environment variables
+
+```sh
+export FASTLY_API_KEY="cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
+export FASTLY_SERVICE_ID="2ctACCWV5PmZGadiS7Ft5T"
+```
+
+Run steampipe:
+
+```shell
+steampipe query
+```
+
+List your Fastly domains:
 
 ```sql
 select
   name,
-  service_type,
-  active_version
+  service_id,
+  service_version,
+  created_at
 from
-  fastly_service
+  fastly_service_domain;
+```
+
+```
++----------------+------------------------+-----------------+---------------------------+
+| name           | service_id             | service_version | created_at                |
++----------------+------------------------+-----------------+---------------------------+
+| testnumbe3.com | FxvqNlNxUKWRWrioXE15Q6 | 4               | 2023-04-18T21:58:07+05:30 |
++----------------+------------------------+-----------------+---------------------------+
 ```
 
 ## Developing
