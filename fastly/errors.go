@@ -2,7 +2,6 @@ package fastly
 
 import (
 	"context"
-	"path"
 	"strings"
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
@@ -13,7 +12,7 @@ func shouldIgnoreErrors(notFoundErrors []string) plugin.ErrorPredicateWithContex
 	return func(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData, err error) bool {
 		for _, pattern := range notFoundErrors {
 			// handle not found error
-			if ok, _ := path.Match(err.Error(), pattern); ok {
+			if strings.Contains(err.Error(), pattern) {
 				return true
 			}
 		}
