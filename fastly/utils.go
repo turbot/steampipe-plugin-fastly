@@ -76,7 +76,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 
 	// set active version if version is not provided in config
 	if serviceVersion == "" {
-		version, err := getActiveVersion(sc.Client, apiKey, serviceID, d)
+		version, err := getActiveVersion(sc.Client, serviceID, d)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 
 		// set the latest version if there is no active version available for the service
 		if sc.ServiceVersion == 0 {
-			latestVersion, err := getLatestVersion(sc.Client, apiKey, serviceID, d)
+			latestVersion, err := getLatestVersion(sc.Client, serviceID, d)
 			if err != nil {
 				return nil, err
 			}
@@ -98,7 +98,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 	return sc, nil
 }
 
-func getActiveVersion(client *fastly.Client, apiKey string, serviceID string, d *plugin.QueryData) (*int, error) {
+func getActiveVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*int, error) {
 	cacheKey := serviceID + "activeVersion"
 	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
 		return cachedData.(*int), nil
@@ -115,7 +115,7 @@ func getActiveVersion(client *fastly.Client, apiKey string, serviceID string, d 
 	return types.Int(service.ActiveVersion), nil
 }
 
-func getLatestVersion(client *fastly.Client, apiKey string, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
+func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
 	cacheKey := serviceID + "latestVersion"
 	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
 		return cachedData.(*fastly.Version), nil
