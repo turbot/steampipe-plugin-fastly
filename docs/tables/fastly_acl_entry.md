@@ -18,6 +18,38 @@ from
   fastly_acl_entry;
 ```
 
+### List entries created in the last 30 days
+
+```sql
+select
+  id,
+  acl_id,
+  ip,
+  negated,
+  service_id,
+  created_at
+from
+  fastly_acl_entry
+where
+  created_at >= now() - interval '30 days';
+```
+
+### List entries that are not deleted
+
+```sql
+select
+  id,
+  acl_id,
+  ip,
+  negated,
+  service_id,
+  created_at
+from
+  fastly_acl_entry
+where
+  deleted_at is null;
+```
+
 ### List entries which are negated
 
 ```sql

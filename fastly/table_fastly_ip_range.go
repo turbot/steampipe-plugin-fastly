@@ -7,6 +7,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyIPRange(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_ip_range",
@@ -33,6 +35,8 @@ type ipRow struct {
 	Cidr    string `json:"cidr"`
 	Version int    `json:"version"`
 }
+
+/// LIST FUNCTION
 
 func listIPs(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)

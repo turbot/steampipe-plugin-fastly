@@ -71,66 +71,32 @@ Configure your account details in `~/.steampipe/config/fastly.spc`:
 connection "fastly" {
   plugin = "fastly"
 
-  # api_key(required) - The fastly API Token.
+  # api_key - The fastly API Token. Required.
   # Get your API token from Fastly https://docs.fastly.com/en/guides/using-api-tokens
   # Can also be set with the FASTLY_API_KEY environment variable.
   # api_key = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
 
-  # service_id(required) - Each connection represents a single service in Fastly.
+  # service_id - Each connection represents a single service in Fastly. Required
   # Can also be set with the FASTLY_SERVICE_ID environment variable.
   # service_id = "2ctACCWV5PmZGadiS7Ft5T"
 
-  # base_url(optional) - The fastly base URL. By default plugin will use https://api.fastly.com.
+  # base_url - The fastly base URL. By default plugin will use https://api.fastly.com. Optional.
   # Can also be set with the FASTLY_API_URL environment variable.
   # base_url = "https://api.fastly.com"
 
-  # service_version(optional) - The fastly service version. By default, the plugin will use the active version of the provided service; if no active version is available, then the plugin will use the latest version.
+  # service_version - The fastly service version. By default, the plugin will use the active version of the provided service; if no active version is available, then the plugin will use the latest version. Optional.
   # Can also be set with the FASTLY_SERVICE_VERSION environment variable.
   # service_version = "1"
 }
 ```
 
-## Configuring Fastly Credentials
-
-You may specify the API Key and Service ID to authenticate:
-
-- `api_key`: The fastly API Token.
-- `service_id`: The fastly Service ID.
-
-```hcl
-connection "fastly" {
-  plugin     = "fastly"
-  api_key    = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
-  service_id = "2ctACCWV5PmZGadiS7Ft5T"
-}
-```
-
-or you may specify the API Key, Service ID, Base URL and Service Version to authenticate:
-
-- `api_key`: The fastly API Token.
-- `service_id`: The fastly Service ID.
-- `base_url`: The fastly base URL.
-- `service_version`: The fastly Service version.
-
-```hcl
-connection "fastly" {
-  plugin          = "fastly"
-  api_key         = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
-  service_id      = "2ctACCWV5PmZGadiS7Ft5T"
-  base_url        = "https://api.fastly.com"
-  service_version = "1"
-}
-```
-
-or through environment variables
-
-The Fastly plugin will use the Fastly environment variable to obtain credentials **only if the `FASTLY_API_KEY`,`FASTLY_SERVICE_ID`, `FASTLY_API_URL` and `FASTLY_SERVICE_VERSION` is not specified** in the connection:
+Alternatively, you can also use the standard Fastly environment variables to obtain credentials **only if the `FASTLY_API_KEY`,`FASTLY_SERVICE_ID`, `FASTLY_API_URL` and `FASTLY_SERVICE_VERSION` is not specified** in the connection:
 
 ```sh
-export FASTLY_API_KEY="cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
-export FASTLY_SERVICE_ID="2ctACCWV5PmZGadiS7Ft5T"
-export FASTLY_API_URL="https://api.fastly.com"
-export FASTLY_SERVICE_VERSION="1"
+export FASTLY_API_KEY=cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai
+export FASTLY_SERVICE_ID=2ctACCWV5PmZGadiS7Ft5T
+export FASTLY_API_URL=https://api.fastly.com
+export FASTLY_SERVICE_VERSION=1
 ```
 
 ## Get involved

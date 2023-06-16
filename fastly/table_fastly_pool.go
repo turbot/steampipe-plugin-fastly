@@ -7,7 +7,10 @@ import (
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
+
+//// TABLE DEFINITION
 
 func tableFastlyPool(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
@@ -39,7 +42,7 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 			{
 				Name:        "connect_timeout",
 				Type:        proto.ColumnType_INT,
-				Description: "How long to wait for a timeout in milliseconds. Optional.",
+				Description: "How long to wait for a timeout in milliseconds.",
 			},
 			{
 				Name:        "created_at",
@@ -156,9 +159,19 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_BOOL,
 				Description: "Whether to use TLS.",
 			},
+
+			/// Steampipe standard columns
+			{
+				Name:        "title",
+				Description: "Title of the resource.",
+				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Name"),
+			},
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
@@ -182,6 +195,8 @@ func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) 
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

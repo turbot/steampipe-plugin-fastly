@@ -11,6 +11,8 @@ Use SQL to query services, acls, domains and more from Fastly.
 
 ## Quick start
 
+### Install
+
 Download and install the latest Fastly plugin:
 
 ```bash
@@ -19,45 +21,25 @@ steampipe plugin install fastly
 
 Configure your [credentials](https://hub.steampipe.io/plugins/turbot/fastly#credentials) and [config file](https://hub.steampipe.io/plugins/turbot/fastly#configuration).
 
-### Configuring Fastly Credentials
-
 Configure your account details in `~/.steampipe/config/fastly.spc`:
 
 You may specify the API Key and Service ID to authenticate:
 
-- `api_key`: The fastly API Token.
-- `service_id`: The fastly Service ID.
-
 ```hcl
 connection "fastly" {
   plugin     = "fastly"
+
+  # Authentication information
   api_key    = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
   service_id = "2ctACCWV5PmZGadiS7Ft5T"
 }
 ```
 
-or you may specify the API Key, Service ID, Base URL and Service Version to authenticate:
-
-- `api_key`: The fastly API Token.
-- `service_id`: The fastly Service ID.
-- `base_url`: The fastly base URL.
-- `service_version`: The fastly Service version.
-
-```hcl
-connection "fastly" {
-  plugin          = "fastly"
-  api_key         = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
-  service_id      = "2ctACCWV5PmZGadiS7Ft5T"
-  base_url        = "https://api.fastly.com"
-  service_version = "1"
-}
-```
-
-or through environment variables
+Or through environment variables:
 
 ```sh
-export FASTLY_API_KEY="cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
-export FASTLY_SERVICE_ID="2ctACCWV5PmZGadiS7Ft5T"
+export FASTLY_API_KEY=cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai
+export FASTLY_SERVICE_ID=2ctACCWV5PmZGadiS7Ft5T
 ```
 
 Run steampipe:

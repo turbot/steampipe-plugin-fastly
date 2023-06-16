@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_service_domain",
@@ -69,6 +71,8 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 	}
 }
 
+/// LIST FUNCTION
+
 func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -96,6 +100,8 @@ func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.Hydr
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getServiceDomain(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

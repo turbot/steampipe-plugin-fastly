@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyBackend(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_backend",
@@ -72,6 +74,11 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 				Description: "Timestamp (UTC) of when the backend was deleted.",
 			},
 			{
+				Name:        "error_threshold",
+				Type:        proto.ColumnType_INT,
+				Description: "The error threshold of the backend.",
+			},
+			{
 				Name:        "first_byte_timeout",
 				Type:        proto.ColumnType_INT,
 				Description: "Maximum duration in milliseconds to wait for the server response to begin after a TCP connection is established and the request has been sent. If exceeded, the connection is aborted and a synthethic 503 response will be presented instead.",
@@ -85,6 +92,11 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 				Name:        "hostname",
 				Type:        proto.ColumnType_STRING,
 				Description: "The hostname of the backend. May be used as an alternative to address to set the backend location.",
+			},
+			{
+				Name:        "keep_alive_time",
+				Type:        proto.ColumnType_INT,
+				Description: "Keep alive time of the backend.",
 			},
 			{
 				Name:        "max_conn",
@@ -188,6 +200,8 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 	}
 }
 
+/// LIST FUNCTION
+
 func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -210,6 +224,8 @@ func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

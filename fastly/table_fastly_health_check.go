@@ -7,7 +7,10 @@ import (
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
+
+//// TABLE DEFINITION
 
 func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
@@ -86,7 +89,6 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_INT,
 				Description: "When loading a config, the initial number of probes to be seen as OK.",
 			},
-
 			{
 				Name:        "threshold",
 				Type:        proto.ColumnType_INT,
@@ -107,9 +109,24 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_INT,
 				Description: "The number of most recent health check queries to keep for this health check.",
 			},
+			{
+				Name:        "headers",
+				Type:        proto.ColumnType_JSON,
+				Description: "A list of headers corresponding to this health check.",
+			},
+
+			/// Steampipe standard columns
+			{
+				Name:        "title",
+				Description: "Title of the resource.",
+				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Name"),
+			},
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
@@ -133,6 +150,8 @@ func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

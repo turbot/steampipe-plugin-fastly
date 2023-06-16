@@ -57,9 +57,26 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Timestamp (UTC) of when the version was updated.",
 			},
+			{
+				Name:        "deployed",
+				Type:        proto.ColumnType_BOOL,
+				Description: "Whether the version is deployed.",
+			},
+			{
+				Name:        "staging",
+				Type:        proto.ColumnType_BOOL,
+				Description: "Whether the version is in staging.",
+			},
+			{
+				Name:        "testing",
+				Type:        proto.ColumnType_BOOL,
+				Description: "Whether the version is undergoing testing.",
+			},
 		},
 	}
 }
+
+/// HYDRATE FUNCTION
 
 func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)

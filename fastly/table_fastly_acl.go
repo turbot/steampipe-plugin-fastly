@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyACL(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_acl",
@@ -69,6 +71,8 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 	}
 }
 
+/// LIST FUNCTION
+
 func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -91,6 +95,8 @@ func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQuals["name"].GetStringValue()

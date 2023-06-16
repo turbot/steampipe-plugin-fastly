@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// 	TABLE DEFINITION
+
 func tableFastlyCondition(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_condition",
@@ -84,6 +86,8 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 	}
 }
 
+/// LIST FUNCTION
+
 func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -107,6 +111,8 @@ func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

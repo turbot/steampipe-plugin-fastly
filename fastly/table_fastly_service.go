@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyService(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_service",
@@ -65,6 +67,11 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 				Description: "Time-stamp (UTC) of when the service was updated.",
 			},
 			{
+				Name:        "version",
+				Type:        proto.ColumnType_STRING,
+				Description: "Versions associated with the service.",
+			},
+			{
 				Name:        "versions",
 				Type:        proto.ColumnType_JSON,
 				Description: "A list of versions associated with the service.",
@@ -80,6 +87,8 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 		},
 	}
 }
+
+/// HYDRATE FUNCTION
 
 func getService(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)

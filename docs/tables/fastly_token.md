@@ -19,7 +19,24 @@ from
   fastly_token;
 ```
 
-### Show Tokens expiring in the next 30 days
+### List Tokens created in the last 30 days
+
+```sql
+select
+  id,
+  name,
+  created_at,
+  expires_at,
+  ip,
+  last_used_at,
+  user_id
+from
+  fastly_token
+where
+  created_at >= now() - interval '30 days';
+```
+
+### List Tokens expiring in the next 30 days
 
 ```sql
 select
@@ -36,7 +53,7 @@ where
   expires_at < current_timestamp + interval '30 days';
 ```
 
-### List Tokens with no expiration
+### List Tokens that will never expire
 
 ```sql
 select

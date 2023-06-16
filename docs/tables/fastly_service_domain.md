@@ -18,6 +18,22 @@ from
   fastly_service_domain;
 ```
 
+### List domains created in the last 30 days
+
+```sql
+select
+  name,
+  service_id,
+  service_version,
+  comment,
+  created_at,
+  updated_at
+from
+  fastly_service_domain
+where
+  created_at >= now() - interval '30 days';
+```
+
 ### List domains that are not deleted
 
 ```sql
@@ -36,7 +52,7 @@ where
 
 ```sql
 select
-  d.name,
+  d.name as domain_name,
   service_id,
   service_version,
   d.created_at

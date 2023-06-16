@@ -10,6 +10,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_dictionary",
@@ -57,7 +59,6 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Timestamp (UTC) of when the Dictionary was deleted.",
 			},
-
 			{
 				Name:        "updated_at",
 				Type:        proto.ColumnType_TIMESTAMP,
@@ -74,6 +75,8 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
@@ -96,6 +99,8 @@ func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")

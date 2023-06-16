@@ -18,7 +18,23 @@ from
   fastly_acl;
 ```
 
-### List ACLs that are deleted
+### List ACLs created in the last 30 days
+
+```sql
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
+from
+  fastly_acl
+where
+  created_at >= now() - interval '30 days';
+```
+
+### List ACLs that are not deleted
 
 ```sql
 select

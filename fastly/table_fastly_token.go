@@ -11,6 +11,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyToken(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_token",
@@ -79,6 +81,8 @@ func tableFastlyToken(ctx context.Context) *plugin.Table {
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listTokens(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)

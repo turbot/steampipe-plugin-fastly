@@ -8,6 +8,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyDataCenter(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_data_center",
@@ -61,6 +63,8 @@ func tableFastlyDataCenter(ctx context.Context) *plugin.Table {
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listDataCenters(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)

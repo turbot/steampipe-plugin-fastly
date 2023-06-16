@@ -18,6 +18,38 @@ from
   fastly_service;
 ```
 
+### List services created in last the 30 days
+
+```sql
+select
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
+from
+  fastly_service
+where
+  created_at >= now() - interval '30 days';
+```
+
+### List services that have not been updated in the last 90 days
+
+```sql
+select
+  id,
+  name,
+  active_version,
+  comment,
+  updated_at,
+  type
+from
+  fastly_service
+where
+  updated_at < now() - interval '90 days';
+```
+
 ### List services that are not deleted
 
 ```sql

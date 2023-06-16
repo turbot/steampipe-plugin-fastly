@@ -20,6 +20,24 @@ from
   fastly_health_check;
 ```
 
+### List health checks created in the last 7 days
+
+```sql
+select
+  name,
+  service_id,
+  service_version,
+  method,
+  host,
+  path,
+  check_interval,
+  created_at
+from
+  fastly_health_check
+where
+  created_at >= now() - interval '7 days';
+```
+
 ### List health checks that are not deleted
 
 ```sql

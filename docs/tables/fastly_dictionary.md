@@ -18,7 +18,23 @@ from
   fastly_dictionary;
 ```
 
-### List dictionaries that are not deleted
+### List dictionaries created in the last 30 days
+
+```sql
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  write_only,
+  created_at
+from
+  fastly_dictionary
+where
+  created_at >= now() - interval '30 days';
+```
+
+### List dictionaries that have not been deleted
 
 ```sql
 select
@@ -34,7 +50,7 @@ where
   deleted_at is null;
 ```
 
-### List private dictionaries
+### List write-only dictionaries
 
 ```sql
 select

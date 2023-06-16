@@ -17,6 +17,21 @@ from
   fastly_service_version;
 ```
 
+### List versions created in the last 30 days
+
+```sql
+select
+  service_id,
+  number,
+  active,
+  created_at,
+  locked
+from
+  fastly_service_version
+where
+  created_at >= now() - interval '30 days';
+```
+
 ### List all inactive versions
 
 ```sql

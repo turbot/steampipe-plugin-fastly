@@ -9,6 +9,8 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
+//// TABLE DEFINITION
+
 func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "fastly_acl_entry",
@@ -73,6 +75,11 @@ func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Timestamp (UTC) of when the ACL was updated.",
 			},
+			{
+				Name:        "subnet",
+				Type:        proto.ColumnType_INT,
+				Description: "Subnet associated with the ACL entry.",
+			},
 
 			/// Steampipe standard columns
 			{
@@ -84,6 +91,8 @@ func tableFastlyACLEntry(ctx context.Context) *plugin.Table {
 		},
 	}
 }
+
+/// LIST FUNCTION
 
 func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	acl := h.Item.(*fastly.ACL)
@@ -138,6 +147,8 @@ func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 
 	return nil, nil
 }
+
+/// HYDRATE FUNCTION
 
 func getACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	aclId := d.EqualsQuals["acl_id"].GetStringValue()
