@@ -10,7 +10,7 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
-//// 	TABLE DEFINITION
+//// TABLE DEFINITION
 
 func tableFastlyCondition(ctx context.Context) *plugin.Table {
 	return &plugin.Table{
