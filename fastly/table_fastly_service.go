@@ -88,7 +88,7 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 	}
 }
 
-/// HYDRATE FUNCTION
+/// LIST FUNCTION
 
 func getService(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceClient, err := connect(ctx, d)
