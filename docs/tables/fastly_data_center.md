@@ -33,7 +33,7 @@ from
 where
   code = 'BNE';
 ```
-### List data centers of Europe
+### List data centers in Europe
 
 ```sql
 select
@@ -49,7 +49,7 @@ where
   location_group = 'Europe';
 ```
 
-### Show Data center counts by location group
+### Show data center count by location group
 
 ```sql
 select
