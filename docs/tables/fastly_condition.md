@@ -34,7 +34,7 @@ where
   deleted_at is null;
 ```
 
-### List conditions that are cache type
+### List conditions that are of 'CACHE' type
 
 ```sql
 select
@@ -50,7 +50,7 @@ where
   type = 'CACHE';
 ```
 
-### List conditions that are high priority
+### List conditions that are of high priority
 
 ```sql
 select
