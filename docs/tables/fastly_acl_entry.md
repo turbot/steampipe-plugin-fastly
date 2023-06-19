@@ -50,7 +50,7 @@ where
   deleted_at is null;
 ```
 
-### List entries which are negated
+### List entries that are negated
 
 ```sql
 select
