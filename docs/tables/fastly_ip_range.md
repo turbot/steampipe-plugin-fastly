@@ -14,7 +14,7 @@ from
   fastly_ip_range;
 ```
 
-### List IP ranges within a particular a range
+### List IP ranges within a particular CIDR range
 
 ```sql
 select
