@@ -1,7 +1,7 @@
 ---
 name: Feature request - New table
 about: Suggest a new table for this project
-title: Add table fastly_<resource>
+title: Add table fastly_<service>_<resource>
 labels: enhancement, new table
 assignees: ""
 ---
