@@ -71,12 +71,12 @@ Configure your account details in `~/.steampipe/config/fastly.spc`:
 connection "fastly" {
   plugin = "fastly"
 
-  # api_key - The fastly API Token. Required.
+  # api_key - The fastly API token. Required.
   # Get your API token from Fastly https://docs.fastly.com/en/guides/using-api-tokens
   # Can also be set with the FASTLY_API_KEY environment variable.
   # api_key = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
 
-  # service_id - Each connection represents a single service in Fastly. Required
+  # service_id - Each connection represents a single service in Fastly. Required.
   # Can also be set with the FASTLY_SERVICE_ID environment variable.
   # service_id = "2ctACCWV5PmZGadiS7Ft5T"
 
@@ -90,7 +90,7 @@ connection "fastly" {
 }
 ```
 
-Alternatively, you can also use the standard Fastly environment variables to obtain credentials **only if the `FASTLY_API_KEY`,`FASTLY_SERVICE_ID`, `FASTLY_API_URL` and `FASTLY_SERVICE_VERSION` is not specified** in the connection:
+Alternatively, you can also use the standard Fastly environment variables to obtain credentials **only if the `api_key`,`service_id`, `base_url` and `service_version` are not specified** in the connection:
 
 ```sh
 export FASTLY_API_KEY=cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai

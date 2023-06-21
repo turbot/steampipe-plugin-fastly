@@ -33,6 +33,7 @@ from
 where
   code = 'BNE';
 ```
+
 ### List data centers in Europe
 
 ```sql

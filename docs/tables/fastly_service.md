@@ -18,7 +18,7 @@ from
   fastly_service;
 ```
 
-### List services created in last the 30 days
+### List services created in the last 30 days
 
 ```sql
 select
