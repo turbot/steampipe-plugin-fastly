@@ -102,4 +102,4 @@ export FASTLY_SERVICE_VERSION=1
 ## Get involved
 
 - Open source: https://github.com/turbot/steampipe-plugin-fastly
-- Community: [Slack Channel](https://steampipe.io/community/join)
+- Community: [Join #steampipe on Slack →](https://turbot.com/community/join)
