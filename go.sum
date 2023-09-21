@@ -656,8 +656,8 @@ github.com/envoyproxy/protoc-gen-validate v0.9.1/go.mod h1:OKNgG7TCp5pF4d6XftA0+
 github.com/envoyproxy/protoc-gen-validate v0.10.0/go.mod h1:DRjgyB0I43LtJapqN6NiRwroiAU2PaFuvk/vjgh61ss=
 github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.12.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
-github.com/fastly/go-fastly/v8 v8.0.0 h1:c5y4Cuga1iffDJ75Y4p89EXr9aar9pDRvODiTX+wLlg=
-github.com/fastly/go-fastly/v8 v8.0.0/go.mod h1:m/QWKyZsuH8Ow3tDkRLqlbvbJdxalRGkTT3ZKxZJ4eo=
+github.com/fastly/go-fastly/v8 v8.6.1 h1:Hwn6RTHhnaCtafuTeFgXt2IrAPknwqttdj9DTlZ8BSg=
+github.com/fastly/go-fastly/v8 v8.6.1/go.mod h1:sC3WMOjQxwXk+gRI68ooTJJsI+/6AMA/4JLvrhNgpVk=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
