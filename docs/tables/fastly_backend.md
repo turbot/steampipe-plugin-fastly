@@ -16,7 +16,21 @@ The `fastly_backend` table provides insights into the configuration and status o
 ### Basic info
 Explore the configuration of your backend servers on Fastly to understand their security settings, load balancing status, and creation dates. This can help you assess your current setup and identify areas for potential improvement or troubleshooting.
 
-```sql
+```sql+postgres
+select
+  name,
+  address,
+  port,
+  use_ssl,
+  auto_loadbalance,
+  created_at,
+  service_id,
+  service_version
+from
+  fastly_backend;
+```
+
+```sql+sqlite
 select
   name,
   address,
@@ -33,7 +47,23 @@ from
 ### List all backends that are not deleted
 Discover the segments that contain all active backends in your Fastly service. This information is useful for maintaining an overview of your current operational infrastructure and understanding the configuration of each backend.
 
-```sql
+```sql+postgres
+select
+  name,
+  address,
+  port,
+  use_ssl,
+  auto_loadbalance,
+  created_at,
+  service_id,
+  service_version
+from
+  fastly_backend
+where
+  deleted_at is null;
+```
+
+```sql+sqlite
 select
   name,
   address,
@@ -52,7 +82,7 @@ where
 ### List all backends that are using SSL
 Discover the segments that are utilizing SSL for secure communication, which can be crucial for maintaining data privacy and enhancing security measures. This can be particularly useful in identifying and managing secure backends in your network infrastructure.
 
-```sql
+```sql+postgres
 select
   name,
   address,
@@ -68,10 +98,26 @@ where
   use_ssl;
 ```
 
+```sql+sqlite
+select
+  name,
+  address,
+  port,
+  use_ssl,
+  auto_loadbalance,
+  created_at,
+  service_id,
+  service_version
+from
+  fastly_backend
+where
+  use_ssl = 1;
+```
+
 ### List all backends where auto load balance is enabled
 Discover the segments that are auto load balanced in your backends. This is useful for identifying areas where load distribution is automated, allowing for efficient resource management.
 
-```sql
+```sql+postgres
 select
   name,
   address,
@@ -87,10 +133,44 @@ where
   auto_loadbalance;
 ```
 
+```sql+sqlite
+select
+  name,
+  address,
+  port,
+  use_ssl,
+  auto_loadbalance,
+  created_at,
+  service_id,
+  service_version
+from
+  fastly_backend
+where
+  auto_loadbalance = 1;
+```
+
 ### List backends for a particular service
 Uncover the details of specific backends associated with a particular service in Fastly. This is useful for understanding the configuration and settings of the backends, including whether they use SSL, auto load balance, their address, and port, providing insights into the service's operation and performance.
 
-```sql
+```sql+postgres
+select
+  b.name,
+  address,
+  port,
+  use_ssl,
+  auto_loadbalance,
+  b.created_at,
+  service_id,
+  service_version
+from
+  fastly_backend as b,
+  fastly_service as s
+where
+  b.service_id = s.id
+  and s.name = 'check-service';
+```
+
+```sql+sqlite
 select
   b.name,
   address,

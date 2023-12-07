@@ -16,7 +16,15 @@ The `fastly_ip_range` table provides insights into the IP ranges used by Fastly'
 ### Basic info
 Explore which IP ranges are being used and their corresponding versions in your Fastly network. This can help optimize network performance and security by ensuring you're using the most up-to-date IP versions.
 
-```sql
+```sql+postgres
+select
+  cidr,
+  version
+from
+  fastly_ip_range;
+```
+
+```sql+sqlite
 select
   cidr,
   version
@@ -27,7 +35,7 @@ from
 ### List IP ranges within a particular CIDR range
 Explore which IP ranges fall within a specific CIDR range to better manage and monitor network traffic and security. This is particularly useful in identifying potential network vulnerabilities and planning for network expansion.
 
-```sql
+```sql+postgres
 select
   cidr,
   version
@@ -37,10 +45,24 @@ where
   cidr << '199.0.0.0/8';
 ```
 
+```sql+sqlite
+Error: SQLite does not support CIDR operations.
+```
+
 ### Show IPv6 ranges
 Explore the segments of your network that are using IPv6. This can help identify areas for potential upgrades or troubleshooting.
 
-```sql
+```sql+postgres
+select
+  cidr,
+  version
+from
+  fastly_ip_range
+where
+  version = 6;
+```
+
+```sql+sqlite
 select
   cidr,
   version

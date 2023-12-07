@@ -16,7 +16,19 @@ The `fastly_data_center` table provides insights into Fastly's data center locat
 ### Basic info
 Discover the segments that utilize specific data centers by pinpointing their names, codes, and geographical locations. This is useful for understanding the distribution and reach of your data infrastructure across different regions.
 
-```sql
+```sql+postgres
+select
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
+from
+  fastly_data_center;
+```
+
+```sql+sqlite
 select
   name,
   code,
@@ -31,7 +43,21 @@ from
 ### Show data center detail for a particular code
 Explore the specific details of a data center based on its unique code. This can help in understanding its geographical location and security settings, which can be useful for resource allocation and risk assessment.
 
-```sql
+```sql+postgres
+select
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
+from
+  fastly_data_center
+where
+  code = 'BNE';
+```
+
+```sql+sqlite
 select
   name,
   code,
@@ -48,7 +74,21 @@ where
 ### List data centers in Europe
 Explore which data centers are located in Europe, allowing you to understand their geographical distribution and plan your data management strategy accordingly.
 
-```sql
+```sql+postgres
+select
+  name,
+  code,
+  location_group,
+  longitude,
+  latitude,
+  shield
+from
+  fastly_data_center
+where
+  location_group = 'Europe';
+```
+
+```sql+sqlite
 select
   name,
   code,
@@ -65,7 +105,7 @@ where
 ### Show data center count by location group
 Analyze the distribution of data centers across various location groups. This offers a clear perspective on where resources are concentrated, helping to strategize future infrastructure expansion or optimization.
 
-```sql
+```sql+postgres
 select
   location_group,
   count(*)
@@ -75,4 +115,16 @@ group by
   location_group
 order by
   count desc;
+```
+
+```sql+sqlite
+select
+  location_group,
+  count(*)
+from
+  fastly_data_center
+group by
+  location_group
+order by
+  count(*) desc;
 ```

@@ -16,7 +16,19 @@ The `fastly_acl` table provides insights into Access Control Lists within Fastly
 ### Basic info
 Explore which Access Control Lists (ACLs) have been created or updated in Fastly, a crucial step in managing network access and ensuring optimal security measures are in place.
 
-```sql
+```sql+postgres
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
+from
+  fastly_acl;
+```
+
+```sql+sqlite
 select
   id,
   name,
@@ -31,7 +43,7 @@ from
 ### List ACLs created in the last 30 days
 Explore ACLs that have been established in the past month. This can help you understand recent changes and maintain up-to-date security configurations.
 
-```sql
+```sql+postgres
 select
   id,
   name,
@@ -45,10 +57,38 @@ where
   created_at >= now() - interval '30 days';
 ```
 
+```sql+sqlite
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
+from
+  fastly_acl
+where
+  created_at >= datetime('now', '-30 days');
+```
+
 ### List ACLs that are not deleted
 Discover the segments that have active Access Control Lists (ACLs) in Fastly. This can help in maintaining security by ensuring only authorized users have access to specific services.
 
-```sql
+```sql+postgres
+select
+  id,
+  name,
+  service_id,
+  service_version,
+  created_at,
+  updated_at
+from
+  fastly_acl
+where
+  deleted_at is null;
+```
+
+```sql+sqlite
 select
   id,
   name,
@@ -65,12 +105,28 @@ where
 ### List ACLs where the service version is inactive
 Explore which Access Control Lists (ACLs) are associated with inactive versions of services. This can be useful in identifying potential security risks or redundant ACLs that need to be updated or removed.
 
-```sql
+```sql+postgres
 select
   id,
   name,
   a.service_id,
   service_version,
+  a.created_at
+from
+  fastly_acl as a,
+  fastly_service_version as v
+where
+  a.service_id = v.service_id
+  and a.service_version = v.number
+  and not v.active;
+```
+
+```sql+sqlite
+select
+  a.id,
+  a.name,
+  a.service_id,
+  a.service_version,
   a.created_at
 from
   fastly_acl as a,

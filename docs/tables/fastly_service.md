@@ -16,7 +16,19 @@ The `fastly_service` table provides insights into Fastly services within Oracle 
 ### Basic info
 Explore the basic information of your Fastly services to understand the active versions, their creation dates, and types. This can help in managing and tracking the progress and status of your services.
 
-```sql
+```sql+postgres
+select
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
+from
+  fastly_service;
+```
+
+```sql+sqlite
 select
   id,
   name,
@@ -31,7 +43,7 @@ from
 ### List services created in the last 30 days
 Explore which services have been activated in the recent past. This could be useful to track new additions and assess the growth and expansion of your application or platform.
 
-```sql
+```sql+postgres
 select
   id,
   name,
@@ -45,10 +57,24 @@ where
   created_at >= now() - interval '30 days';
 ```
 
+```sql+sqlite
+select
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
+from
+  fastly_service
+where
+  created_at >= datetime('now', '-30 days');
+```
+
 ### List services that have not been updated in the last 90 days
 Discover the segments that have been inactive for the last 90 days. This could be useful in identifying potential areas of neglect or inactivity within your services.
 
-```sql
+```sql+postgres
 select
   id,
   name,
@@ -62,10 +88,38 @@ where
   updated_at < now() - interval '90 days';
 ```
 
+```sql+sqlite
+select
+  id,
+  name,
+  active_version,
+  comment,
+  updated_at,
+  type
+from
+  fastly_service
+where
+  updated_at < datetime('now', '-90 days');
+```
+
 ### List services that are not deleted
 Identify active services in your system by checking which ones have not been marked as deleted. This can help maintain an accurate overview of your current operational services.
 
-```sql
+```sql+postgres
+select
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
+from
+  fastly_service
+where
+  deleted_at is null;
+```
+
+```sql+sqlite
 select
   id,
   name,
@@ -82,7 +136,21 @@ where
 ### List wasm type services
 Explore which services are of the 'wasm' type within your Fastly configuration. This query is useful for identifying these specific services and understanding their distribution within your setup.
 
-```sql
+```sql+postgres
+select
+  id,
+  name,
+  active_version,
+  comment,
+  created_at,
+  type
+from
+  fastly_service
+where
+  type = 'wasm';
+```
+
+```sql+sqlite
 select
   id,
   name,

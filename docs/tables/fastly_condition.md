@@ -16,7 +16,19 @@ The `fastly_condition` table provides insights into the conditions configured wi
 ### Basic info
 Explore the fundamental details of specific conditions within your Fastly service to understand their priority and creation time. This could be particularly useful for auditing and managing your service configurations effectively.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
+from
+  fastly_condition;
+```
+
+```sql+sqlite
 select
   name,
   service_id,
@@ -31,7 +43,21 @@ from
 ### List conditions that are not deleted
 Explore conditions within your Fastly service configuration that are still active and have not been deleted. This allows you to review and manage your current settings and priorities effectively.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
+from
+  fastly_condition
+where
+  deleted_at is null;
+```
+
+```sql+sqlite
 select
   name,
   service_id,
@@ -48,7 +74,21 @@ where
 ### List conditions that are of 'CACHE' type
 Explore which conditions in your Fastly configuration are set to 'CACHE' type. This can help in managing cache behavior and troubleshooting caching issues.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
+from
+  fastly_condition
+where
+  type = 'CACHE';
+```
+
+```sql+sqlite
 select
   name,
   service_id,
@@ -65,7 +105,21 @@ where
 ### List conditions that are of high priority
 Explore which conditions within the Fastly service are marked as high priority. This can be useful in identifying areas that require immediate attention or action.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  type,
+  priority,
+  created_at
+from
+  fastly_condition
+where
+  priority = 1;
+```
+
+```sql+sqlite
 select
   name,
   service_id,

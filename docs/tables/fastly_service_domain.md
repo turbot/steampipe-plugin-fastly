@@ -16,7 +16,19 @@ The `fastly_service_domain` table provides insights into the domain names associ
 ### Basic info
 Explore the essential details of your Fastly service domains, such as the name, version, and timestamps for creation and updates. This information can help you manage and track changes to your services over time.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  comment,
+  created_at,
+  updated_at
+from
+  fastly_service_domain;
+```
+
+```sql+sqlite
 select
   name,
   service_id,
@@ -31,7 +43,7 @@ from
 ### List domains created in the last 30 days
 Explore the recent additions to your web service by identifying domains that have been added in the past month. This can be useful for tracking growth, monitoring new domains, and maintaining an up-to-date overview of your service landscape.
 
-```sql
+```sql+postgres
 select
   name,
   service_id,
@@ -45,10 +57,36 @@ where
   created_at >= now() - interval '30 days';
 ```
 
+```sql+sqlite
+select
+  name,
+  service_id,
+  service_version,
+  comment,
+  created_at,
+  updated_at
+from
+  fastly_service_domain
+where
+  created_at >= datetime('now', '-30 days');
+```
+
 ### List domains that are not deleted
 Discover the segments that are actively in use in your Fastly services by identifying domains that have not been deleted. This can help maintain an efficient and streamlined service by focusing resources on active domains.
 
-```sql
+```sql+postgres
+select
+  name,
+  service_id,
+  service_version,
+  created_at
+from
+  fastly_service_domain
+where
+  deleted_at is null;
+```
+
+```sql+sqlite
 select
   name,
   service_id,
@@ -63,7 +101,21 @@ where
 ### List domains of a particular service
 Gain insights into the different domains associated with a specific service, enabling you to monitor service performance and version details over time. This can be particularly useful in managing and troubleshooting service-related issues.
 
-```sql
+```sql+postgres
+select
+  d.name as domain_name,
+  service_id,
+  service_version,
+  d.created_at
+from
+  fastly_service_domain as d,
+  fastly_service as s
+where
+  d.service_id = s.id
+  and s.name = 'service-check';
+```
+
+```sql+sqlite
 select
   d.name as domain_name,
   service_id,
