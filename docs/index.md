@@ -100,7 +100,4 @@ export FASTLY_API_URL=https://api.fastly.com
 export FASTLY_SERVICE_VERSION=1
 ```
 
-## Get involved
 
-- Open source: https://github.com/turbot/steampipe-plugin-fastly
-- Community: [Join #steampipe on Slack →](https://turbot.com/community/join)
