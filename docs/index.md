@@ -8,6 +8,7 @@ short_name: "fastly"
 description: "Steampipe plugin to query services, acls, domains and more from Fastly."
 og_description: "Query Fastly with SQL! Open source CLI. No DB required."
 og_image: "/images/plugins/turbot/fastly-social-graphic.png"
+engines: ["steampipe", "sqlite", "postgres", "export"]
 ---
 
 # Fastly + Steampipe
