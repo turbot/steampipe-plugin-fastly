@@ -15,7 +15,7 @@ engines: ["steampipe", "sqlite", "postgres", "export"]
 
 [Fastly](https://fastly.com) provides an edge cloud platform, including content delivery network (CDN), image optimization, video and streaming, cloud security, and load balancing services.
 
-[Steampipe](https://steampipe.io) is an open source CLI to instantly query cloud APIs using SQL.
+[Steampipe](https://steampipe.io) is an open-source zero-ETL engine to instantly query cloud APIs using SQL.
 
 List your Fastly domains:
 
