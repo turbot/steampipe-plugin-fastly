@@ -8,13 +8,14 @@ short_name: "fastly"
 description: "Steampipe plugin to query services, acls, domains and more from Fastly."
 og_description: "Query Fastly with SQL! Open source CLI. No DB required."
 og_image: "/images/plugins/turbot/fastly-social-graphic.png"
+engines: ["steampipe", "sqlite", "postgres", "export"]
 ---
 
 # Fastly + Steampipe
 
 [Fastly](https://fastly.com) provides an edge cloud platform, including content delivery network (CDN), image optimization, video and streaming, cloud security, and load balancing services.
 
-[Steampipe](https://steampipe.io) is an open source CLI to instantly query cloud APIs using SQL.
+[Steampipe](https://steampipe.io) is an open-source zero-ETL engine to instantly query cloud APIs using SQL.
 
 List your Fastly domains:
 
@@ -99,7 +100,4 @@ export FASTLY_API_URL=https://api.fastly.com
 export FASTLY_SERVICE_VERSION=1
 ```
 
-## Get involved
 
-- Open source: https://github.com/turbot/steampipe-plugin-fastly
-- Community: [Join #steampipe on Slack →](https://turbot.com/community/join)
