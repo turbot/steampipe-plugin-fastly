@@ -17,11 +17,12 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 		Name:        "fastly_backend",
 		Description: "Backends for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listBackends,
+			ParentHydrate: listServicesVersions,
+			Hydrate:       listBackends,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getBackend,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"name", "service_id", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -203,6 +204,8 @@ func tableFastlyBackend(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := h.Item.(*fastly.Version)
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_backend.listBackends", "connection_error", err)
@@ -210,8 +213,8 @@ func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 	}
 
 	input := &fastly.ListBackendsInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceVersion.ServiceID,
+		ServiceVersion: serviceVersion.Number,
 	}
 	items, err := serviceClient.Client.ListBackends(input)
 	if err != nil {
@@ -229,9 +232,11 @@ func listBackends(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 
 func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId == "" {
 		return nil, nil
 	}
 
@@ -242,8 +247,8 @@ func getBackend(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData)
 	}
 
 	input := &fastly.GetBackendInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetBackend(input)

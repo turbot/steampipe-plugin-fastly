@@ -17,11 +17,12 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 		Name:        "fastly_pool",
 		Description: "Pools in the Fastly account.",
 		List: &plugin.ListConfig{
-			Hydrate: listPools,
+			ParentHydrate: listServicesVersions,
+			Hydrate:       listPools,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getPool,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"service_id", "name", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -174,14 +175,16 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := h.Item.(*fastly.Version)
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_pool.listPools", "connection_error", err)
 		return nil, err
 	}
 	input := &fastly.ListPoolsInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceVersion.ServiceID,
+		ServiceVersion: serviceVersion.Number,
 	}
 	items, err := serviceClient.Client.ListPools(input)
 	if err != nil {
@@ -200,9 +203,11 @@ func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) 
 
 func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId == "" {
 		return nil, nil
 	}
 
@@ -213,8 +218,8 @@ func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 	}
 
 	input := &fastly.GetPoolInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetPool(input)

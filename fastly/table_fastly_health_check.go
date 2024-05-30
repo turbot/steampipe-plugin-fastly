@@ -17,11 +17,12 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 		Name:        "fastly_health_check",
 		Description: "Health checks for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listHealthChecks,
+			ParentHydrate: listServicesVersions,
+			Hydrate:       listHealthChecks,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getHealthCheck,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"name", "service_id", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -129,14 +130,16 @@ func tableFastlyHealthCheck(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := h.Item.(*fastly.Version)
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_health_check.listHealthChecks", "connection_error", err)
 		return nil, err
 	}
 	input := &fastly.ListHealthChecksInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceVersion.ServiceID,
+		ServiceVersion: serviceVersion.Number,
 	}
 	items, err := serviceClient.Client.ListHealthChecks(input)
 	if err != nil {
@@ -155,9 +158,11 @@ func listHealthChecks(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 
 func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId== "" || serviceVersion == 0 {
 		return nil, nil
 	}
 
@@ -168,8 +173,8 @@ func getHealthCheck(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 	}
 
 	input := &fastly.GetHealthCheckInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetHealthCheck(input)

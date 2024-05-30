@@ -21,7 +21,7 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getACL,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"service_id", "name", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -74,35 +74,47 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	resp, err := listServicesVersionHydrate(ctx, d, h)
+	if err != nil {
+		return nil, err
+	}
+	versions := resp.([]*fastly.Version)
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_acl.listACL", "connection_error", err)
 		return nil, err
 	}
 
-	input := fastly.ListACLsInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
-	}
-	items, err := serviceClient.Client.ListACLs(&input)
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_acl.listACL", "query_error", err)
-		return nil, err
-	}
-	for _, item := range items {
-		d.StreamListItem(ctx, item)
+	for _, item := range versions {
+		input := fastly.ListACLsInput{
+			ServiceID:      item.ServiceID,
+			ServiceVersion: item.Number,
+		}
+		items, err := serviceClient.Client.ListACLs(&input)
+		if err != nil {
+			plugin.Logger(ctx).Error("fastly_service_acl.listACL", "query_error", err)
+			return nil, err
+		}
+		for _, item := range items {
+			d.StreamListItem(ctx, item)
+		}
 	}
 
 	return nil, nil
 }
 
+//// ACL Entry Parent Hydrate
+
 /// HYDRATE FUNCTION
 
 func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	name := d.EqualsQuals["name"].GetStringValue()
+	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId == "" {
 		return nil, nil
 	}
 
@@ -112,8 +124,8 @@ func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (in
 		return nil, err
 	}
 	input := &fastly.GetACLInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 

@@ -17,11 +17,12 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 		Name:        "fastly_condition",
 		Description: "Conditions defined in the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listConditions,
+			ParentHydrate: listServicesVersions,
+			Hydrate:       listConditions,
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getCondition,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"name", "service_id", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -89,6 +90,8 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := h.Item.(*fastly.Version)
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_condition.listConditions", "connection_error", err)
@@ -96,8 +99,8 @@ func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 	}
 
 	input := &fastly.ListConditionsInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceVersion.ServiceID,
+		ServiceVersion: serviceVersion.Number,
 	}
 	items, err := serviceClient.Client.ListConditions(input)
 	if err != nil {
@@ -116,9 +119,11 @@ func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 
 func getCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId == "" {
 		return nil, nil
 	}
 
@@ -129,8 +134,8 @@ func getCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 	}
 
 	input := &fastly.GetConditionInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 

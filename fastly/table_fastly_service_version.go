@@ -6,6 +6,7 @@ import (
 	"github.com/fastly/go-fastly/v8/fastly"
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v5/memoize"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
@@ -14,7 +15,7 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 		Name:        "fastly_service_version",
 		Description: "Service versions in the Fastly account.",
 		List: &plugin.ListConfig{
-			Hydrate: getServiceVersion,
+			Hydrate: listServicesVersions,
 		},
 		Columns: []*plugin.Column{
 			{
@@ -78,24 +79,96 @@ func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
 
 /// HYDRATE FUNCTION
 
-func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	serviceClient, err := connect(ctx, d)
+// func getServiceVersion(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+// 	serviceId := h.Item.(*fastly.Service).ID
+
+// 	serviceClient, err := connect(ctx, d)
+// 	if err != nil {
+// 		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "connection_error", err)
+// 		return nil, err
+// 	}
+
+// 	input := &fastly.GetVersionInput{
+// 		ServiceID:      serviceId,
+// 		ServiceVersion: serviceClient.ServiceVersion,
+// 	}
+
+// 	version, err := serviceClient.Client.GetVersion(input)
+// 	if err != nil {
+// 		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "api_error", err)
+// 		return nil, err
+// 	}
+// 	d.StreamListItem(ctx, version)
+
+// 	return nil, nil
+// }
+
+var listServicesVersionHydrateMemoize = plugin.HydrateFunc(listServicesVersionsUncached).Memoize(memoize.WithCacheKeyFunction(listServiceVersionCacheKey))
+
+// Build a cache key for the call to getServiceIdCacheKey.
+func listServiceVersionCacheKey(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	key := "listServiceVersions"
+	return key, nil
+}
+
+func listServicesVersionHydrate(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	return listServicesVersionHydrateMemoize(ctx, d, h)
+}
+
+func listServicesVersionsUncached(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	servicesV, err := listServicesHydrate(ctx, d, h)
 	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "connection_error", err)
+		return nil, err
+	}
+	services := servicesV.([]*fastly.Service)
+
+	var serviceVersions []*fastly.Version
+
+	for _, s := range services {
+		serviceClient, err := connect(ctx, d)
+		if err != nil {
+			plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "connection_error", err)
+			return nil, err
+		}
+
+		input := &fastly.ListVersionsInput{
+			ServiceID: s.ID,
+		}
+
+		versions, err := serviceClient.Client.ListVersions(input)
+		if err != nil {
+			plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "api_error", err)
+			return nil, err
+		}
+		// for _, item := range versions {
+		// 	d.StreamListItem(ctx, item)
+
+		// 	if d.RowsRemaining(ctx) == 0 {
+		// 		return nil, nil
+		// 	}
+		// }
+
+		serviceVersions = append(serviceVersions, versions...)
+	}
+
+	return serviceVersions, nil
+}
+
+func listServicesVersions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	resp, err := listServicesVersionHydrate(ctx, d, h)
+	if err != nil {
 		return nil, err
 	}
 
-	input := &fastly.GetVersionInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
-	}
+	versions := resp.([]*fastly.Version)
 
-	version, err := serviceClient.Client.GetVersion(input)
-	if err != nil {
-		plugin.Logger(ctx).Error("fastly_service_version.getServiceVersion", "api_error", err)
-		return nil, err
+	for _, item := range versions {
+		d.StreamListItem(ctx, item)
+
+		if d.RowsRemaining(ctx) == 0 {
+			return nil, nil
+		}
 	}
-	d.StreamListItem(ctx, version)
 
 	return nil, nil
 }
