@@ -41,10 +41,12 @@ func listServiceVersionsByConfig(ctx context.Context, d *plugin.QueryData, h *pl
 
 }
 
-// We are not directly streaming the list of items in the "fastly_acl" table
-// because this is a special case involving parent hydrate chaining.
-// Since Steampipe does not yet support parent hydrate chaining, we return the result as required
+// We are not stream listing the result here directly because
+// The Steampipe does not yet support parent hydrate chaining, we return the result as required
 // and use it accordingly.
+// There is a special case for the table "fastly_acl" where we can not use the hydrate items
+// due to the above limitation of steampipe as the table "fastly_acl_entry" use the table "fastly_acl" as parent
+// So we return the result as required and use it accordingly.
 func configServiceVersionHydrate(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateData) (interface{}, error) {
 	serviceID, serviceVersion := "", ""
 
