@@ -148,43 +148,6 @@ func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 	return nil, nil
 }
 
-// //// PARENT HYDRATE
-// // As of now steampipe does not support parent hydrate upto 3 level down
-// // fastly_acl users fastly_service as parent so we can not use the fastly_acl as the parent hydrate of fastly_acl_entry.
-// // Avoid forcing user to pass service ID in the query parameter we have added the this function.
-// // Also to keep the plugin behaviour unchanged.
-
-// func listACLAsParent(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-// 	servicesH, err := listServicesHydrate(ctx, d, h)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	services := servicesH.([]*fastly.Service)
-// 	for _, s := range services {
-
-// 		serviceClient, err := connect(ctx, d)
-// 		if err != nil {
-// 			plugin.Logger(ctx).Error("fastly_acl_entry.listACLAsParent", "connection_error", err)
-// 			return nil, err
-// 		}
-
-// 		input := fastly.ListACLsInput{
-// 			ServiceID:      s.ID,
-// 			ServiceVersion: serviceClient.ServiceVersion,
-// 		}
-// 		items, err := serviceClient.Client.ListACLs(&input)
-// 		if err != nil {
-// 			plugin.Logger(ctx).Error("fastly_acl_entry.listACLAsParent", "query_error", err)
-// 			return nil, err
-// 		}
-// 		for _, item := range items {
-// 			d.StreamListItem(ctx, item)
-// 		}
-// 	}
-
-// 	return nil, nil
-// }
-
 /// HYDRATE FUNCTION
 
 func getACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {

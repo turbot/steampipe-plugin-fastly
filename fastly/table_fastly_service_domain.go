@@ -17,8 +17,9 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 		Name:        "fastly_service_domain",
 		Description: "Domains for the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServicesVersions,
+			ParentHydrate: listServiceVersionsByConfig,
 			Hydrate:       listServiceDomains,
+			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getServiceDomain,
@@ -77,6 +78,14 @@ func tableFastlyServiceDomain(ctx context.Context) *plugin.Table {
 func listServiceDomains(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceVersion := h.Item.(*fastly.Version)
 
+	if d.EqualsQualString("service_id") != "" && d.EqualsQualString("service_id") != serviceVersion.ServiceID {
+		return nil, nil
+	}
+
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != serviceVersion.Number {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_service_domain.listServiceDomains", "connection_error", err)
@@ -112,7 +121,7 @@ func getServiceDomain(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" || serviceId == "" {
+	if name == "" || serviceId == "" || serviceVersion == 0 {
 		return nil, nil
 	}
 

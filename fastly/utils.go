@@ -3,18 +3,18 @@ package fastly
 import (
 	"context"
 	"os"
-	"strconv"
 
 	"github.com/fastly/go-fastly/v8/fastly"
 	"github.com/pkg/errors"
 
+	"github.com/turbot/go-kit/types"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
 type serviceClient struct {
 	Client         *fastly.Client
 	ServiceID      string
-	ServiceVersion int
+	ServiceVersion string
 }
 
 func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
@@ -51,11 +51,13 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 		return nil, errors.New("'api_key' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
 	}
 
-	sv, _ := strconv.Atoi(serviceVersion)
+	if serviceID == "" && serviceVersion != "" {
+		return nil, errors.New("'service_id' must be set in the connection configuration if 'service_version' is specified. Edit your connection configuration file and then restart steampipe")
+	}
 
 	sc := &serviceClient{
 		ServiceID:      serviceID,
-		ServiceVersion: sv,
+		ServiceVersion: serviceVersion,
 	}
 
 	// check if a base URL is provided in config
@@ -73,60 +75,42 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 		sc.Client = conn
 	}
 
-	// // set active version if version is not provided in config
-	// if serviceVersion == "" {
-	// 	version, err := getActiveVersion(sc.Client, serviceID, d)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	sc.ServiceVersion = *version
-
-	// 	// set the latest version if there is no active version available for the service
-	// 	if sc.ServiceVersion == 0 {
-	// 		latestVersion, err := getLatestVersion(sc.Client, serviceID, d)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		sc.ServiceVersion = latestVersion.Number
-	// 	}
-	// }
-
 	// Save to cache
 	d.ConnectionManager.Cache.Set(cacheKey, sc)
 
 	return sc, nil
 }
 
-// func getActiveVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*int, error) {
-// 	cacheKey := serviceID + "activeVersion"
-// 	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
-// 		return cachedData.(*int), nil
-// 	}
+func getActiveVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*int, error) {
+	cacheKey := serviceID + "activeVersion"
+	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
+		return cachedData.(*int), nil
+	}
 
-// 	service, err := client.GetService(&fastly.GetServiceInput{ID: serviceID})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	service, err := client.GetService(&fastly.GetServiceInput{ID: serviceID})
+	if err != nil {
+		return nil, err
+	}
 
-// 	// Save to cache
-// 	d.ConnectionManager.Cache.Set(cacheKey, &service.ActiveVersion)
+	// Save to cache
+	d.ConnectionManager.Cache.Set(cacheKey, &service.ActiveVersion)
 
-// 	return types.Int(service.ActiveVersion), nil
-// }
+	return types.Int(service.ActiveVersion), nil
+}
 
-// func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
-// 	cacheKey := serviceID + "latestVersion"
-// 	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
-// 		return cachedData.(*fastly.Version), nil
-// 	}
+func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
+	cacheKey := serviceID + "latestVersion"
+	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
+		return cachedData.(*fastly.Version), nil
+	}
 
-// 	version, err := client.LatestVersion(&fastly.LatestVersionInput{ServiceID: serviceID})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	version, err := client.LatestVersion(&fastly.LatestVersionInput{ServiceID: serviceID})
+	if err != nil {
+		return nil, err
+	}
 
-// 	// Save to cache
-// 	d.ConnectionManager.Cache.Set(cacheKey, version)
+	// Save to cache
+	d.ConnectionManager.Cache.Set(cacheKey, version)
 
-// 	return version, nil
-// }
+	return version, nil
+}

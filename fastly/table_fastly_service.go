@@ -35,11 +35,13 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 			{
 				Name:        "name",
 				Type:        proto.ColumnType_STRING,
+				Hydrate:     getService,
 				Description: "The name of the service.",
 			},
 			{
 				Name:        "active_version",
 				Type:        proto.ColumnType_INT,
+				Hydrate:     getService,
 				Transform:   transform.FromField("ActiveVersion.Number", "ActiveVersion"),
 				Description: "Configuration for the active version of this service.",
 			},
@@ -50,21 +52,25 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 			},
 			{
 				Name:        "created_at",
+				Hydrate:     getService,
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Time-stamp (UTC) of when the service was created.",
 			},
 			{
 				Name:        "customer_id",
+				Hydrate:     getService,
 				Type:        proto.ColumnType_STRING,
 				Description: "Alphanumeric string identifying the customer.",
 			},
 			{
 				Name:        "deleted_at",
+				Hydrate:     getService,
 				Type:        proto.ColumnType_TIMESTAMP,
 				Description: "Time-stamp (UTC) of when the service was deleted.",
 			},
 			{
 				Name:        "type",
+				Hydrate:     getService,
 				Type:        proto.ColumnType_STRING,
 				Description: "The type of this service.",
 			},
@@ -83,6 +89,7 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 			{
 				Name:        "versions",
 				Type:        proto.ColumnType_JSON,
+				Hydrate:     getService,
 				Description: "A list of versions associated with the service.",
 			},
 
@@ -108,6 +115,11 @@ func listServices(ctx context.Context, d *plugin.QueryData, _ *plugin.HydrateDat
 
 	input := &fastly.ListServicesInput{
 		PerPage: 100,
+	}
+
+	if serviceClient.ServiceID != "" {
+		d.StreamListItem(ctx, &fastly.Service{ID: serviceClient.ServiceID})
+		return nil, nil
 	}
 
 	paginator := serviceClient.Client.NewListServicesPaginator(input)
@@ -155,6 +167,11 @@ func listServicesHydrateUncached(ctx context.Context, d *plugin.QueryData, _ *pl
 	}
 
 	var services []*fastly.Service
+
+	if serviceClient.ServiceID != "" {
+		services = append(services, &fastly.Service{ID: serviceClient.ServiceID})
+		return services, nil
+	}
 
 	input := &fastly.ListServicesInput{
 		PerPage: 100,

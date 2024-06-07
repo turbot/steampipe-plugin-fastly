@@ -17,8 +17,9 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 		Name:        "fastly_pool",
 		Description: "Pools in the Fastly account.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServicesVersions,
+			ParentHydrate: listServiceVersionsByConfig,
 			Hydrate:       listPools,
+			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getPool,
@@ -177,6 +178,14 @@ func tableFastlyPool(ctx context.Context) *plugin.Table {
 func listPools(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceVersion := h.Item.(*fastly.Version)
 
+	if d.EqualsQualString("service_id") != "" && d.EqualsQualString("service_id") != serviceVersion.ServiceID {
+		return nil, nil
+	}
+
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != serviceVersion.Number {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_pool.listPools", "connection_error", err)
@@ -207,7 +216,7 @@ func getPool(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" || serviceId == "" {
+	if name == "" || serviceId == "" || serviceVersion == 0 {
 		return nil, nil
 	}
 

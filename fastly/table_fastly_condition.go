@@ -17,8 +17,9 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 		Name:        "fastly_condition",
 		Description: "Conditions defined in the service version.",
 		List: &plugin.ListConfig{
-			ParentHydrate: listServicesVersions,
+			ParentHydrate: listServiceVersionsByConfig,
 			Hydrate:       listConditions,
+			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getCondition,
@@ -92,6 +93,14 @@ func tableFastlyCondition(ctx context.Context) *plugin.Table {
 func listConditions(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	serviceVersion := h.Item.(*fastly.Version)
 
+	if d.EqualsQualString("service_id") != "" && d.EqualsQualString("service_id") != serviceVersion.ServiceID {
+		return nil, nil
+	}
+
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != serviceVersion.Number {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_condition.listConditions", "connection_error", err)
@@ -123,7 +132,7 @@ func getCondition(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDat
 	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" || serviceId == "" {
+	if name == "" || serviceId == "" || serviceVersion == 0 {
 		return nil, nil
 	}
 

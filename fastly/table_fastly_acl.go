@@ -21,7 +21,7 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getACL,
-			KeyColumns: plugin.AllColumns([]string{"service_id", "name", "service_version"}),
+			KeyColumns: plugin.AllColumns([]string{"service_id", "service_version", "name"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -74,11 +74,30 @@ func tableFastlyACL(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
-	resp, err := listServicesVersionHydrate(ctx, d, h)
+
+	// We have not used the parent hydrate relation here because:
+	// 1. Steampipe does not yet support parent hydrate chaining up to three levels deep (Service > ACL > ACL Entry).
+	// 2. Since this table is used as the parent of `fastly_acl_entry`, we avoided using the parent hydrate concept here.
+
+	// Check if the service details have been configured in connection config.
+	var versions []*fastly.Version
+	cfgVersions, err := configServiceVersionHydrate(ctx, d, h)
 	if err != nil {
+		plugin.Logger(ctx).Error("fastly_service_acl.listACL.configServiceVersionHydrate", "api_error", err)
 		return nil, err
 	}
-	versions := resp.([]*fastly.Version)
+
+	if cfgVersions != nil {
+		versions = cfgVersions.([]*fastly.Version)
+	} else {
+		// Fetch all the available services and its versions
+		resp, err := listServicesVersionHydrate(ctx, d, h)
+		if err != nil {
+			return nil, err
+		}
+
+		versions = resp.([]*fastly.Version)
+	}
 
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
@@ -104,8 +123,6 @@ func listACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (i
 	return nil, nil
 }
 
-//// ACL Entry Parent Hydrate
-
 /// HYDRATE FUNCTION
 
 func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
@@ -114,7 +131,7 @@ func getACL(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (in
 	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" || serviceId == "" {
+	if name == "" || serviceId == "" || serviceVersion == 0 {
 		return nil, nil
 	}
 
