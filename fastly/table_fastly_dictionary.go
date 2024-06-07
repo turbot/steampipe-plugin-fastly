@@ -17,11 +17,13 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 		Name:        "fastly_dictionary",
 		Description: "Dictionaries for the service version.",
 		List: &plugin.ListConfig{
-			Hydrate: listDictionaries,
+			ParentHydrate: listServiceVersionsByConfig,
+			Hydrate:       listDictionaries,
+			KeyColumns:    plugin.OptionalColumns([]string{"service_id", "service_version"}),
 		},
 		Get: &plugin.GetConfig{
 			Hydrate:    getDictionary,
-			KeyColumns: plugin.SingleColumn("name"),
+			KeyColumns: plugin.AllColumns([]string{"service_id", "name", "service_version"}),
 		},
 		Columns: []*plugin.Column{
 			{
@@ -79,14 +81,24 @@ func tableFastlyDictionary(ctx context.Context) *plugin.Table {
 /// LIST FUNCTION
 
 func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	serviceVersion := h.Item.(*fastly.Version)
+
+	if d.EqualsQualString("service_id") != "" && d.EqualsQualString("service_id") != serviceVersion.ServiceID {
+		return nil, nil
+	}
+
+	if d.EqualsQuals["service_version"] != nil && int(d.EqualsQuals["service_version"].GetInt64Value()) != serviceVersion.Number {
+		return nil, nil
+	}
+
 	serviceClient, err := connect(ctx, d)
 	if err != nil {
 		plugin.Logger(ctx).Error("fastly_dictionary.listDictionaries", "connection_error", err)
 		return nil, err
 	}
 	input := fastly.ListDictionariesInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceVersion.ServiceID,
+		ServiceVersion: serviceVersion.Number,
 	}
 	items, err := serviceClient.Client.ListDictionaries(&input)
 	if err != nil {
@@ -104,9 +116,11 @@ func listDictionaries(ctx context.Context, d *plugin.QueryData, h *plugin.Hydrat
 
 func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	name := d.EqualsQualString("name")
+	serviceId := d.EqualsQualString("service_id")
+	serviceVersion := d.EqualsQuals["service_version"].GetInt64Value()
 
 	// check if the name is empty
-	if name == "" {
+	if name == "" || serviceId == "" || serviceVersion == 0 {
 		return nil, nil
 	}
 
@@ -117,8 +131,8 @@ func getDictionary(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateDa
 	}
 
 	input := &fastly.GetDictionaryInput{
-		ServiceID:      serviceClient.ServiceID,
-		ServiceVersion: serviceClient.ServiceVersion,
+		ServiceID:      serviceId,
+		ServiceVersion: int(serviceVersion),
 		Name:           name,
 	}
 	result, err := serviceClient.Client.GetDictionary(input)
