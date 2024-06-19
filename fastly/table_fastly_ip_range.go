@@ -5,6 +5,7 @@ import (
 
 	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v5/plugin/transform"
 )
 
 //// TABLE DEFINITION
@@ -26,6 +27,13 @@ func tableFastlyIPRange(ctx context.Context) *plugin.Table {
 				Name:        "version",
 				Type:        proto.ColumnType_INT,
 				Description: "IP version for the range.",
+			},
+			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+				Hydrate:     getServiceId,
+				Transform:   transform.FromValue(),
 			},
 		},
 	}

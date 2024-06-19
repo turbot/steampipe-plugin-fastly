@@ -72,6 +72,13 @@ func tableFastlyService(ctx context.Context) *plugin.Table {
 				Description: "Versions associated with the service.",
 			},
 			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+				Hydrate:     getServiceId,
+				Transform:   transform.FromValue(),
+			},
+			{
 				Name:        "versions",
 				Type:        proto.ColumnType_JSON,
 				Description: "A list of versions associated with the service.",

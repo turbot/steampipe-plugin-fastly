@@ -70,6 +70,13 @@ func tableFastlyToken(ctx context.Context) *plugin.Table {
 				Description: "Alphanumeric string identifying the user.",
 				Transform:   transform.FromField("UserID"),
 			},
+			{
+				Name:        "service_id",
+				Type:        proto.ColumnType_STRING,
+				Description: "Alphanumeric string identifying the service.",
+				Hydrate:     getServiceId,
+				Transform:   transform.FromValue(),
+			},
 
 			/// Steampipe standard columns
 			{

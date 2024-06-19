@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/turbot/go-kit/types"
+	"github.com/turbot/steampipe-plugin-sdk/v5/memoize"
 	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
 )
 
@@ -130,4 +131,30 @@ func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryDa
 	d.ConnectionManager.Cache.Set(cacheKey, version)
 
 	return version, nil
+}
+
+// if the caching is required other than per connection, build a cache key for the call and use it in Memoize.
+var getServiceIdMemoized = plugin.HydrateFunc(getServiceIdUncached).Memoize(memoize.WithCacheKeyFunction(getServiceIdCacheKey))
+
+// declare a wrapper hydrate function to call the memoized function
+// - this is required when a memoized function is used for a column definition
+func getServiceId(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	return getServiceIdMemoized(ctx, d, h)
+}
+
+// Build a cache key for the call to getServiceIdCacheKey.
+func getServiceIdCacheKey(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+	key := "getServiceId"
+	return key, nil
+}
+
+func getServiceIdUncached(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
+
+	serviceClient, err := connect(ctx, d)
+
+	if err != nil {
+		plugin.Logger(ctx).Error("getServiceId", err)
+		return nil, err
+	}
+	return serviceClient.ServiceID, nil
 }
