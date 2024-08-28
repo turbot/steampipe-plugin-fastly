@@ -1,14 +1,14 @@
 module github.com/turbot/steampipe-plugin-fastly
 
-go 1.21.0
+go 1.22.4
 
-toolchain go1.21.1
+toolchain go1.22.6
 
 require (
 	github.com/fastly/go-fastly/v8 v8.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/turbot/go-kit v0.10.0-rc.0
-	github.com/turbot/steampipe-plugin-sdk/v5 v5.10.1
+	github.com/turbot/steampipe-plugin-sdk/v5 v5.10.3
 )
 
 require (
