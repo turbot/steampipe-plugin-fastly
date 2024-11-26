@@ -3,7 +3,6 @@ package fastly
 import (
 	"context"
 	"os"
-	"strconv"
 
 	"github.com/fastly/go-fastly/v8/fastly"
 	"github.com/pkg/errors"
@@ -16,7 +15,7 @@ import (
 type serviceClient struct {
 	Client         *fastly.Client
 	ServiceID      string
-	ServiceVersion int
+	ServiceVersion string
 }
 
 func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
@@ -49,15 +48,17 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 	}
 
 	// Error if the minimum config is not set
-	if apiKey == "" || serviceID == "" {
-		return nil, errors.New("'api_key' and 'service_id' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
+	if apiKey == "" {
+		return nil, errors.New("'api_key' must be set in the connection configuration. Edit your connection configuration file and then restart Steampipe.")
 	}
 
-	sv, _ := strconv.Atoi(serviceVersion)
+	if serviceID == "" && serviceVersion != "" {
+		return nil, errors.New("'service_id' must be set in the connection configuration if 'service_version' is specified. Edit your connection configuration file and then restart steampipe")
+	}
 
 	sc := &serviceClient{
 		ServiceID:      serviceID,
-		ServiceVersion: sv,
+		ServiceVersion: serviceVersion,
 	}
 
 	// check if a base URL is provided in config
@@ -73,24 +74,6 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 			return nil, err
 		}
 		sc.Client = conn
-	}
-
-	// set active version if version is not provided in config
-	if serviceVersion == "" {
-		version, err := getActiveVersion(sc.Client, serviceID, d)
-		if err != nil {
-			return nil, err
-		}
-		sc.ServiceVersion = *version
-
-		// set the latest version if there is no active version available for the service
-		if sc.ServiceVersion == 0 {
-			latestVersion, err := getLatestVersion(sc.Client, serviceID, d)
-			if err != nil {
-				return nil, err
-			}
-			sc.ServiceVersion = latestVersion.Number
-		}
 	}
 
 	// Save to cache
