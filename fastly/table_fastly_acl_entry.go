@@ -118,7 +118,7 @@ func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 	}
 
 	input := &fastly.ListACLEntriesInput{
-		ServiceID: serviceClient.ServiceID,
+		ServiceID: acl.ServiceID,
 		ACLID:     acl.ID,
 		PerPage:   maxLimit,
 	}
@@ -153,6 +153,7 @@ func listACLEntries(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateD
 func getACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	aclId := d.EqualsQuals["acl_id"].GetStringValue()
 	id := d.EqualsQuals["id"].GetStringValue()
+	serviceId := d.EqualsQuals["service_id"].GetStringValue()
 
 	// check if aclId or id is empty
 	if aclId == "" || id == "" {
@@ -166,7 +167,7 @@ func getACLEntry(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData
 	}
 
 	input := &fastly.GetACLEntryInput{
-		ServiceID: serviceClient.ServiceID,
+		ServiceID: serviceId,
 		ACLID:     aclId,
 		ID:        id,
 	}
