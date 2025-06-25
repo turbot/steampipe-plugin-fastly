@@ -77,7 +77,8 @@ connection "fastly" {
   # Can also be set with the FASTLY_API_KEY environment variable.
   # api_key = "cj9nU-sMOgUmo7FxcZ48tJsofuiVUhai"
 
-  # service_id - Each connection represents a single service in Fastly. Required.
+  # service_id - The service ID in Fastly. Optional.
+  # If the service version is configured, the service ID must also be configured.
   # Can also be set with the FASTLY_SERVICE_ID environment variable.
   # service_id = "2ctACCWV5PmZGadiS7Ft5T"
 
