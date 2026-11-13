@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/turbot/go-kit/types"
-	"github.com/turbot/steampipe-plugin-sdk/v5/memoize"
-	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v6/memoize"
+	"github.com/turbot/steampipe-plugin-sdk/v6/plugin"
 )
 
 type serviceClient struct {
@@ -23,7 +23,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 
 	// Load connection from cache, which preserves throttling protection etc
 	cacheKey := "fastly"
-	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
+	if cachedData, ok := d.ConnectionCache.Get(ctx, cacheKey); ok {
 		return cachedData.(*serviceClient), nil
 	}
 
@@ -77,7 +77,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 
 	// set active version if version is not provided in config
 	if serviceVersion == "" {
-		version, err := getActiveVersion(sc.Client, serviceID, d)
+		version, err := getActiveVersion(ctx, sc.Client, serviceID, d)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 
 		// set the latest version if there is no active version available for the service
 		if sc.ServiceVersion == 0 {
-			latestVersion, err := getLatestVersion(sc.Client, serviceID, d)
+			latestVersion, err := getLatestVersion(ctx, sc.Client, serviceID, d)
 			if err != nil {
 				return nil, err
 			}
@@ -94,14 +94,14 @@ func connect(ctx context.Context, d *plugin.QueryData) (*serviceClient, error) {
 	}
 
 	// Save to cache
-	d.ConnectionManager.Cache.Set(cacheKey, sc)
+	_ = d.ConnectionCache.Set(ctx, cacheKey, sc)
 
 	return sc, nil
 }
 
-func getActiveVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*int, error) {
+func getActiveVersion(ctx context.Context, client *fastly.Client, serviceID string, d *plugin.QueryData) (*int, error) {
 	cacheKey := serviceID + "activeVersion"
-	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
+	if cachedData, ok := d.ConnectionCache.Get(ctx, cacheKey); ok {
 		return cachedData.(*int), nil
 	}
 
@@ -111,14 +111,14 @@ func getActiveVersion(client *fastly.Client, serviceID string, d *plugin.QueryDa
 	}
 
 	// Save to cache
-	d.ConnectionManager.Cache.Set(cacheKey, &service.ActiveVersion)
+	_ = d.ConnectionCache.Set(ctx, cacheKey, &service.ActiveVersion)
 
 	return types.Int(service.ActiveVersion), nil
 }
 
-func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
+func getLatestVersion(ctx context.Context, client *fastly.Client, serviceID string, d *plugin.QueryData) (*fastly.Version, error) {
 	cacheKey := serviceID + "latestVersion"
-	if cachedData, ok := d.ConnectionManager.Cache.Get(cacheKey); ok {
+	if cachedData, ok := d.ConnectionCache.Get(ctx, cacheKey); ok {
 		return cachedData.(*fastly.Version), nil
 	}
 
@@ -128,7 +128,7 @@ func getLatestVersion(client *fastly.Client, serviceID string, d *plugin.QueryDa
 	}
 
 	// Save to cache
-	d.ConnectionManager.Cache.Set(cacheKey, version)
+	_ = d.ConnectionCache.Set(ctx, cacheKey, version)
 
 	return version, nil
 }
