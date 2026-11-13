@@ -5,8 +5,8 @@ import (
 
 	"github.com/fastly/go-fastly/v8/fastly"
 
-	"github.com/turbot/steampipe-plugin-sdk/v5/grpc/proto"
-	"github.com/turbot/steampipe-plugin-sdk/v5/plugin"
+	"github.com/turbot/steampipe-plugin-sdk/v6/grpc/proto"
+	"github.com/turbot/steampipe-plugin-sdk/v6/plugin"
 )
 
 func tableFastlyServiceVersion(ctx context.Context) *plugin.Table {
